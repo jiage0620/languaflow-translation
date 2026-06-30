@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VibeCoding 智能翻译系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        primaryDark: '#2563eb',
+                        primaryLight: '#60a5fa',
+                        secondary: '#1e40af',
+                        accent: '#06b6d4',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                        info: '#3b82f6'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .scrollbar-thin {
+                scrollbar-width: thin;
+                scrollbar-color: #cbd5e1 transparent;
+            }
+            .scrollbar-thin::-webkit-scrollbar {
+                width: 6px;
+            }
+            .scrollbar-thin::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .scrollbar-thin::-webkit-scrollbar-thumb {
+                background-color: #cbd5e1;
+                border-radius: 3px;
+            }
+            .transition-all-300 {
+                transition: all 0.3s ease;
+            }
+            .loading-dots span {
+                animation: loading 1.4s infinite ease-in-out both;
+            }
+            .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+            .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+            @keyframes loading {
+                0%, 80%, 100% { transform: scale(0); }
+                40% { transform: scale(1); }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-cyan-50 min-h-screen text-gray-800">
+
+    <nav class="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
+                        <i class="fa fa-language text-white text-lg"></i>
+                    </div>
+                    <span class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                        VibeCoding 翻译系统
+                    </span>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-1">
+                    <button onclick="navigateTo('translate')" id="nav-translate" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all-300 flex items-center space-x-2">
+                        <i class="fa fa-file-text-o"></i>
+                        <span>文本翻译</span>
+                    </button>
+                    <button onclick="navigateTo('memory')" id="nav-memory" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all-300 flex items-center space-x-2">
+                        <i class="fa fa-database"></i>
+                        <span>翻译记忆库</span>
+                    </button>
+                    <button onclick="navigateTo('corpus')" id="nav-corpus" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all-300 flex items-center space-x-2">
+                        <i class="fa fa-book"></i>
+                        <span>专业语料库</span>
+                    </button>
+                    <button onclick="navigateTo('subtitle')" id="nav-subtitle" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all-300 flex items-center space-x-2">
+                        <i class="fa fa-closed-captioning"></i>
+                        <span>实时字幕</span>
+                    </button>
+                    <button onclick="navigateTo('api')" id="nav-api" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all-300 flex items-center space-x-2">
+                        <i class="fa fa-cog"></i>
+                        <span>API配置</span>
+                    </button>
+                </div>
+
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-all-300">
+                    <i class="fa fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 shadow-lg">
+            <div class="px-4 py-2 space-y-1">
+                <button onclick="navigateTo('translate'); toggleMobileMenu()" id="mobile-nav-translate" class="mobile-nav-btn w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 transition-all-300 flex items-center space-x-3">
+                    <i class="fa fa-file-text-o"></i>
+                    <span>文本翻译</span>
+                </button>
+                <button onclick="navigateTo('memory'); toggleMobileMenu()" id="mobile-nav-memory" class="mobile-nav-btn w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 transition-all-300 flex items-center space-x-3">
+                    <i class="fa fa-database"></i>
+                    <span>翻译记忆库</span>
+                </button>
+                <button onclick="navigateTo('corpus'); toggleMobileMenu()" id="mobile-nav-corpus" class="mobile-nav-btn w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 transition-all-300 flex items-center space-x-3">
+                    <i class="fa fa-book"></i>
+                    <span>专业语料库</span>
+                </button>
+                <button onclick="navigateTo('subtitle'); toggleMobileMenu()" id="mobile-nav-subtitle" class="mobile-nav-btn w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 transition-all-300 flex items-center space-x-3">
+                    <i class="fa fa-closed-captioning"></i>
+                    <span>实时字幕</span>
+                </button>
+                <button onclick="navigateTo('api'); toggleMobileMenu()" id="mobile-nav-api" class="mobile-nav-btn w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 transition-all-300 flex items-center space-x-3">
+                    <i class="fa fa-cog"></i>
+                    <span>API配置</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-20 pb-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div id="page-content" class="transition-all-300 duration-300">
+        </div>
+    </main>
+
+    <div id="toast" class="fixed bottom-6 right-6 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-lg transform translate-y-20 opacity-0 transition-all-300 z-50 flex items-center space-x-3">
+        <i id="toast-icon" class="fa fa-check-circle text-green-400"></i>
+        <span id="toast-message">操作成功</span>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-all-300" id="modal-content">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="modal-title" class="text-lg font-semibold text-gray-800">提示</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                <p id="modal-message" class="text-gray-600 mb-6"></p>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300">取消</button>
+                    <button id="modal-confirm" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primaryDark transition-all-300">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/api-config.js"></script>
+    <script src="js/corpus.js"></script>
+    <script src="js/memory.js"></script>
+    <script src="js/subtitle.js"></script>
+    <script src="js/translate.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
