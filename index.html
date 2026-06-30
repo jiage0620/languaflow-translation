@@ -3,26 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VibeCoding 智能翻译系统</title>
+    <title>LinguaFlow 智能翻译系统</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#3b82f6',
-                        primaryDark: '#2563eb',
-                        primaryLight: '#60a5fa',
-                        secondary: '#1e40af',
+                        primary: '#6366f1',
+                        primaryDark: '#4f46e5',
+                        primaryLight: '#818cf8',
+                        secondary: '#0ea5e9',
                         accent: '#06b6d4',
+                        mint: '#14b8a6',
                         success: '#10b981',
                         warning: '#f59e0b',
                         danger: '#ef4444',
-                        info: '#3b82f6'
+                        info: '#6366f1'
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px rgba(99, 102, 241, 0.08)',
+                        'hover': '0 8px 30px rgba(99, 102, 241, 0.15)',
+                        'glow': '0 0 40px rgba(99, 102, 241, 0.1)'
                     }
                 }
             }
@@ -32,7 +43,7 @@
         @layer utilities {
             .scrollbar-thin {
                 scrollbar-width: thin;
-                scrollbar-color: #cbd5e1 transparent;
+                scrollbar-color: #e2e8f0 transparent;
             }
             .scrollbar-thin::-webkit-scrollbar {
                 width: 6px;
@@ -41,7 +52,7 @@
                 background: transparent;
             }
             .scrollbar-thin::-webkit-scrollbar-thumb {
-                background-color: #cbd5e1;
+                background-color: #e2e8f0;
                 border-radius: 3px;
             }
             .transition-all-300 {
@@ -56,114 +67,2546 @@
                 0%, 80%, 100% { transform: scale(0); }
                 40% { transform: scale(1); }
             }
+            .card-hover {
+                transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .card-hover:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 20px 40px rgba(99, 102, 241, 0.12);
+            }
+            .btn-gradient {
+                background: linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%);
+            }
+            .btn-gradient:hover {
+                background: linear-gradient(135deg, #4f46e5 0%, #0284c7 100%);
+            }
+            .glass-effect {
+                background: rgba(255, 255, 255, 0.85);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+            }
+            .text-gradient {
+                background: linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 via-white to-cyan-50 min-h-screen text-gray-800">
+<body class="bg-gradient-to-br from-indigo-50 via-white to-sky-50 min-h-screen text-gray-800 font-sans overflow-x-hidden">
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/3 -left-40 w-96 h-96 bg-secondary/5 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-40 right-1/4 w-72 h-72 bg-accent/5 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/4 left-1/4 w-64 h-64 bg-mint/5 rounded-full blur-3xl"></div>
+    </div>
 
-    <nav class="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-sm z-50">
+    <nav class="fixed top-0 left-0 right-0 glass-effect shadow-sm z-50 border-b border-white/50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-2">
-                    <div class="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
-                        <i class="fa fa-language text-white text-lg"></i>
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                        <i class="fa fa-globe text-white text-lg"></i>
                     </div>
-                    <span class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                        VibeCoding 翻译系统
+                    <span class="text-xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                        LinguaFlow
                     </span>
                 </div>
                 
-                <div class="hidden md:flex items-center space-x-1">
-                    <button onclick="navigateTo('translate')" id="nav-translate" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all-300 flex items-center space-x-2">
-                        <i class="fa fa-file-text-o"></i>
+                <div class="hidden md:flex items-center space-x-2">
+                    <button onclick="navigateTo('translate')" id="nav-translate" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all-300 flex items-center space-x-2 hover:bg-indigo-50 hover:text-primary">
+                        <i class="fa fa-file-text-o w-4 h-4"></i>
                         <span>文本翻译</span>
                     </button>
-                    <button onclick="navigateTo('memory')" id="nav-memory" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all-300 flex items-center space-x-2">
-                        <i class="fa fa-database"></i>
+                    <button onclick="navigateTo('memory')" id="nav-memory" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all-300 flex items-center space-x-2 hover:bg-indigo-50 hover:text-primary">
+                        <i class="fa fa-database w-4 h-4"></i>
                         <span>翻译记忆库</span>
                     </button>
-                    <button onclick="navigateTo('corpus')" id="nav-corpus" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all-300 flex items-center space-x-2">
-                        <i class="fa fa-book"></i>
+                    <button onclick="navigateTo('corpus')" id="nav-corpus" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all-300 flex items-center space-x-2 hover:bg-indigo-50 hover:text-primary">
+                        <i class="fa fa-book w-4 h-4"></i>
                         <span>专业语料库</span>
                     </button>
-                    <button onclick="navigateTo('subtitle')" id="nav-subtitle" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all-300 flex items-center space-x-2">
-                        <i class="fa fa-closed-captioning"></i>
+                    <button onclick="navigateTo('subtitle')" id="nav-subtitle" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all-300 flex items-center space-x-2 hover:bg-indigo-50 hover:text-primary">
+                        <i class="fa fa-closed-captioning w-4 h-4"></i>
                         <span>实时字幕</span>
                     </button>
-                    <button onclick="navigateTo('api')" id="nav-api" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all-300 flex items-center space-x-2">
-                        <i class="fa fa-cog"></i>
+                    <button onclick="navigateTo('ocr')" id="nav-ocr" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all-300 flex items-center space-x-2 hover:bg-indigo-50 hover:text-primary">
+                        <i class="fa fa-camera w-4 h-4"></i>
+                        <span>OCR识别</span>
+                    </button>
+                    <button onclick="navigateTo('ppt')" id="nav-ppt" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all-300 flex items-center space-x-2 hover:bg-indigo-50 hover:text-primary">
+                        <i class="fa fa-file-powerpoint-o w-4 h-4"></i>
+                        <span>PPT翻译</span>
+                    </button>
+                    <button onclick="navigateTo('api')" id="nav-api" class="nav-btn px-4 py-2 rounded-xl text-sm font-medium transition-all-300 flex items-center space-x-2 hover:bg-indigo-50 hover:text-primary">
+                        <i class="fa fa-cog w-4 h-4"></i>
                         <span>API配置</span>
                     </button>
                 </div>
 
-                <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-all-300">
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-xl text-gray-600 hover:bg-indigo-50 hover:text-primary transition-all-300">
                     <i class="fa fa-bars text-xl"></i>
                 </button>
             </div>
         </div>
-
         <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 shadow-lg">
             <div class="px-4 py-2 space-y-1">
-                <button onclick="navigateTo('translate'); toggleMobileMenu()" id="mobile-nav-translate" class="mobile-nav-btn w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 transition-all-300 flex items-center space-x-3">
-                    <i class="fa fa-file-text-o"></i>
+                <button onclick="navigateTo('translate'); toggleMobileMenu()" id="mobile-nav-translate" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center space-x-3">
+                    <i class="fa fa-file-text-o w-5 text-center"></i>
                     <span>文本翻译</span>
                 </button>
-                <button onclick="navigateTo('memory'); toggleMobileMenu()" id="mobile-nav-memory" class="mobile-nav-btn w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 transition-all-300 flex items-center space-x-3">
-                    <i class="fa fa-database"></i>
+                <button onclick="navigateTo('memory'); toggleMobileMenu()" id="mobile-nav-memory" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center space-x-3">
+                    <i class="fa fa-database w-5 text-center"></i>
                     <span>翻译记忆库</span>
                 </button>
-                <button onclick="navigateTo('corpus'); toggleMobileMenu()" id="mobile-nav-corpus" class="mobile-nav-btn w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 transition-all-300 flex items-center space-x-3">
-                    <i class="fa fa-book"></i>
+                <button onclick="navigateTo('corpus'); toggleMobileMenu()" id="mobile-nav-corpus" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center space-x-3">
+                    <i class="fa fa-book w-5 text-center"></i>
                     <span>专业语料库</span>
                 </button>
-                <button onclick="navigateTo('subtitle'); toggleMobileMenu()" id="mobile-nav-subtitle" class="mobile-nav-btn w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 transition-all-300 flex items-center space-x-3">
-                    <i class="fa fa-closed-captioning"></i>
+                <button onclick="navigateTo('subtitle'); toggleMobileMenu()" id="mobile-nav-subtitle" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center space-x-3">
+                    <i class="fa fa-closed-captioning w-5 text-center"></i>
                     <span>实时字幕</span>
                 </button>
-                <button onclick="navigateTo('api'); toggleMobileMenu()" id="mobile-nav-api" class="mobile-nav-btn w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-blue-50 transition-all-300 flex items-center space-x-3">
-                    <i class="fa fa-cog"></i>
+                <button onclick="navigateTo('ocr'); toggleMobileMenu()" id="mobile-nav-ocr" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center space-x-3">
+                    <i class="fa fa-camera w-5 text-center"></i>
+                    <span>OCR识别</span>
+                </button>
+                <button onclick="navigateTo('ppt'); toggleMobileMenu()" id="mobile-nav-ppt" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center space-x-3">
+                    <i class="fa fa-file-powerpoint-o w-5 text-center"></i>
+                    <span>PPT翻译</span>
+                </button>
+                <button onclick="navigateTo('api'); toggleMobileMenu()" id="mobile-nav-api" class="mobile-nav-btn w-full text-left px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 flex items-center space-x-3">
+                    <i class="fa fa-cog w-5 text-center"></i>
                     <span>API配置</span>
                 </button>
             </div>
         </div>
     </nav>
 
-    <main class="pt-20 pb-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div id="page-content" class="transition-all-300 duration-300">
-        </div>
+    <main class="pt-20 pb-12 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="max-w-7xl mx-auto" id="page-content"></div>
     </main>
 
-    <div id="toast" class="fixed bottom-6 right-6 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-lg transform translate-y-20 opacity-0 transition-all-300 z-50 flex items-center space-x-3">
-        <i id="toast-icon" class="fa fa-check-circle text-green-400"></i>
-        <span id="toast-message">操作成功</span>
+    <div id="toast" class="fixed bottom-6 right-6 glass-effect text-gray-800 px-6 py-3 rounded-2xl shadow-lg transform translate-y-20 opacity-0 transition-all-300 flex items-center gap-3 z-50 border border-white/50">
+        <i id="toast-icon" class="fa fa-check-circle text-primary"></i>
+        <span id="toast-message"></span>
     </div>
 
-    <div id="modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all-300">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform scale-95 transition-all-300" id="modal-content">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 id="modal-title" class="text-lg font-semibold text-gray-800">提示</h3>
-                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
-                        <i class="fa fa-times text-xl"></i>
-                    </button>
+    <div id="modal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 opacity-0 pointer-events-none transition-all-300 backdrop-blur-sm">
+        <div id="modal-content" class="glass-effect rounded-2xl shadow-2xl p-8 w-full max-w-md transform scale-95 transition-all-300 border border-white/50">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                    <i id="modal-icon" class="fa fa-info-circle text-white"></i>
                 </div>
-                <p id="modal-message" class="text-gray-600 mb-6"></p>
-                <div class="flex justify-end space-x-3">
-                    <button onclick="closeModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300">取消</button>
-                    <button id="modal-confirm" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primaryDark transition-all-300">确定</button>
-                </div>
+                <h3 id="modal-title" class="text-xl font-bold text-gray-800"></h3>
+            </div>
+            <p id="modal-message" class="text-gray-600 mb-6"></p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeModal()" class="px-5 py-2.5 bg-white text-gray-700 border border-gray-100 rounded-xl hover:bg-gray-50 hover:border-gray-200 transition-all-300 shadow-sm">取消</button>
+                <button id="modal-confirm" class="px-5 py-2.5 btn-gradient text-white rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all-300">确定</button>
             </div>
         </div>
     </div>
 
-    <script src="js/utils.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/api-config.js"></script>
-    <script src="js/corpus.js"></script>
-    <script src="js/memory.js"></script>
-    <script src="js/subtitle.js"></script>
-    <script src="js/translate.js"></script>
-    <script src="js/app.js"></script>
+    <script>
+        const STORAGE_KEYS = {
+            MEMORY: 'linguaflow_translation_memory',
+            CORPUS: 'linguaflow_translation_corpus',
+            API_CONFIG: 'linguaflow_translation_api_config'
+        };
+
+        const LANGUAGES = [
+            { code: 'zh', name: '中文', baiduCode: 'zh' },
+            { code: 'en', name: '英语', baiduCode: 'en' },
+            { code: 'ja', name: '日语', baiduCode: 'jp' },
+            { code: 'ko', name: '韩语', baiduCode: 'kor' }
+        ];
+
+        const INDUSTRIES = [
+            { value: 'it', label: 'IT技术' },
+            { value: 'education', label: '教育培训' },
+            { value: 'medical', label: '医疗健康' },
+            { value: 'general', label: '通用领域' }
+        ];
+
+        let currentPage = 'translate';
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            toastMessage.textContent = message;
+            
+            const icons = {
+                success: 'fa-check-circle text-success',
+                error: 'fa-times-circle text-danger',
+                warning: 'fa-exclamation-circle text-warning',
+                info: 'fa-info-circle text-primary'
+            };
+            
+            toastIcon.className = `fa ${icons[type] || icons.success}`;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function showModal(title, message, confirmCallback = null) {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modal-content');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const modalConfirm = document.getElementById('modal-confirm');
+            
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            
+            modalConfirm.onclick = () => {
+                if (confirmCallback) confirmCallback();
+                closeModal();
+            };
+            
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+        }
+
+        function formatDate(date) {
+            const d = new Date(date);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function copyToClipboard(text) {
+            return new Promise((resolve, reject) => {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text).then(resolve).catch(reject);
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.style.position = 'fixed';
+                    textarea.style.left = '-9999px';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        resolve();
+                    } catch (err) {
+                        reject(err);
+                    }
+                    document.body.removeChild(textarea);
+                }
+            });
+        }
+
+        function downloadFile(content, filename, type = 'text/plain') {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function parseSRT(srtText) {
+            const regex = /(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})\n([\s\S]*?)(?=\n\n|\n$)/g;
+            const subtitles = [];
+            let match;
+            
+            while ((match = regex.exec(srtText)) !== null) {
+                subtitles.push({
+                    index: parseInt(match[1]),
+                    startTime: match[2],
+                    endTime: match[3],
+                    text: match[4].trim()
+                });
+            }
+            
+            return subtitles;
+        }
+
+        function formatSRT(subtitles) {
+            return subtitles.map(sub => 
+                `${sub.index}\n${sub.startTime} --> ${sub.endTime}\n${sub.text}\n`
+            ).join('\n');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        class StorageManager {
+            constructor() {
+                this.initDefaultData();
+            }
+
+            initDefaultData() {
+                if (!this.getMemory()) {
+                    this.setMemory([]);
+                }
+                if (!this.getCorpus()) {
+                    this.setCorpus([
+                        { id: '1', source: 'API', target: '应用程序接口', industry: 'it' },
+                        { id: '2', source: 'SDK', target: '软件开发工具包', industry: 'it' },
+                        { id: '3', source: 'UI', target: '用户界面', industry: 'it' },
+                        { id: '4', source: 'AI', target: '人工智能', industry: 'it' },
+                        { id: '5', source: 'Database', target: '数据库', industry: 'it' },
+                        { id: '6', source: 'Algorithm', target: '算法', industry: 'it' },
+                        { id: '7', source: 'Machine Learning', target: '机器学习', industry: 'it' },
+                        { id: '8', source: 'Cloud Computing', target: '云计算', industry: 'it' },
+                        { id: '9', source: 'COVID-19', target: '新冠病毒', industry: 'medical' },
+                        { id: '10', source: 'Vaccine', target: '疫苗', industry: 'medical' },
+                        { id: '11', source: 'Doctor', target: '医生', industry: 'medical' },
+                        { id: '12', source: 'Patient', target: '患者', industry: 'medical' },
+                        { id: '13', source: 'Online Course', target: '在线课程', industry: 'education' },
+                        { id: '14', source: 'E-learning', target: '电子学习', industry: 'education' },
+                        { id: '15', source: 'Teacher', target: '教师', industry: 'education' }
+                    ]);
+                }
+                if (!this.getApiConfig()) {
+                    this.setApiConfig({
+                        appId: '',
+                        key: '',
+                        apiType: 'baidu'
+                    });
+                }
+            }
+
+            getMemory() {
+                try {
+                    const data = localStorage.getItem(STORAGE_KEYS.MEMORY);
+                    return data ? JSON.parse(data) : null;
+                } catch (e) {
+                    console.error('Failed to get memory:', e);
+                    return [];
+                }
+            }
+
+            setMemory(data) {
+                try {
+                    localStorage.setItem(STORAGE_KEYS.MEMORY, JSON.stringify(data));
+                } catch (e) {
+                    console.error('Failed to set memory:', e);
+                }
+            }
+
+            addMemoryItem(item) {
+                const memory = this.getMemory();
+                const newItem = {
+                    ...item,
+                    id: generateId(),
+                    timestamp: Date.now()
+                };
+                memory.unshift(newItem);
+                this.setMemory(memory);
+                return newItem;
+            }
+
+            removeMemoryItem(id) {
+                const memory = this.getMemory();
+                const filtered = memory.filter(item => item.id !== id);
+                this.setMemory(filtered);
+            }
+
+            clearMemory() {
+                this.setMemory([]);
+            }
+
+            searchMemory(query, sourceLang, targetLang) {
+                const memory = this.getMemory();
+                return memory.filter(item => {
+                    const matchesQuery = !query || 
+                        item.source.toLowerCase().includes(query.toLowerCase()) ||
+                        item.target.toLowerCase().includes(query.toLowerCase());
+                    const matchesLang = (!sourceLang || item.sourceLang === sourceLang) &&
+                                       (!targetLang || item.targetLang === targetLang);
+                    return matchesQuery && matchesLang;
+                });
+            }
+
+            getMemoryBySource(source, sourceLang, targetLang) {
+                const memory = this.getMemory();
+                return memory.find(item => 
+                    item.source === source && 
+                    item.sourceLang === sourceLang && 
+                    item.targetLang === targetLang
+                );
+            }
+
+            getCorpus() {
+                try {
+                    const data = localStorage.getItem(STORAGE_KEYS.CORPUS);
+                    return data ? JSON.parse(data) : null;
+                } catch (e) {
+                    console.error('Failed to get corpus:', e);
+                    return [];
+                }
+            }
+
+            setCorpus(data) {
+                try {
+                    localStorage.setItem(STORAGE_KEYS.CORPUS, JSON.stringify(data));
+                } catch (e) {
+                    console.error('Failed to set corpus:', e);
+                }
+            }
+
+            addCorpusItem(item) {
+                const corpus = this.getCorpus();
+                const newItem = {
+                    ...item,
+                    id: generateId()
+                };
+                corpus.push(newItem);
+                this.setCorpus(corpus);
+                return newItem;
+            }
+
+            updateCorpusItem(id, updatedItem) {
+                const corpus = this.getCorpus();
+                const index = corpus.findIndex(item => item.id === id);
+                if (index !== -1) {
+                    corpus[index] = { ...corpus[index], ...updatedItem };
+                    this.setCorpus(corpus);
+                    return corpus[index];
+                }
+                return null;
+            }
+
+            removeCorpusItem(id) {
+                const corpus = this.getCorpus();
+                const filtered = corpus.filter(item => item.id !== id);
+                this.setCorpus(filtered);
+            }
+
+            clearCorpus() {
+                this.setCorpus([]);
+            }
+
+            searchCorpus(query, industry) {
+                const corpus = this.getCorpus();
+                return corpus.filter(item => {
+                    const matchesQuery = !query || 
+                        item.source.toLowerCase().includes(query.toLowerCase()) ||
+                        item.target.toLowerCase().includes(query.toLowerCase());
+                    const matchesIndustry = !industry || item.industry === industry;
+                    return matchesQuery && matchesIndustry;
+                });
+            }
+
+            getCorpusBySource(source) {
+                const corpus = this.getCorpus();
+                return corpus.find(item => item.source.toLowerCase() === source.toLowerCase());
+            }
+
+            replaceCorpusTerms(text) {
+                const corpus = this.getCorpus();
+                let result = text;
+                
+                corpus.forEach(item => {
+                    const regex = new RegExp(item.source, 'gi');
+                    result = result.replace(regex, item.target);
+                });
+                
+                return result;
+            }
+
+            getApiConfig() {
+                try {
+                    const data = localStorage.getItem(STORAGE_KEYS.API_CONFIG);
+                    return data ? JSON.parse(data) : null;
+                } catch (e) {
+                    console.error('Failed to get API config:', e);
+                    return null;
+                }
+            }
+
+            setApiConfig(config) {
+                try {
+                    localStorage.setItem(STORAGE_KEYS.API_CONFIG, JSON.stringify(config));
+                } catch (e) {
+                    console.error('Failed to set API config:', e);
+                }
+            }
+        }
+
+        const storage = new StorageManager();
+
+        class TranslationAPI {
+            constructor() {
+                this.config = storage.getApiConfig();
+            }
+
+            updateConfig() {
+                this.config = storage.getApiConfig();
+            }
+
+            async translate(text, sourceLang, targetLang) {
+                this.updateConfig();
+
+                if (sourceLang === targetLang) {
+                    return { translatedText: text, from: 'same-lang' };
+                }
+
+                const apiType = this.config.apiType || 'auto';
+                
+                switch (apiType) {
+                    case 'openai':
+                        if (this.config.key) {
+                            return await this.translateWithOpenAI(text, sourceLang, targetLang);
+                        }
+                        return await this.translateWithMyMemory(text, sourceLang, targetLang);
+                    
+                    case 'deepseek':
+                        if (this.config.key) {
+                            return await this.translateWithDeepSeek(text, sourceLang, targetLang);
+                        }
+                        return await this.translateWithMyMemory(text, sourceLang, targetLang);
+                    
+                    case 'doubao':
+                        if (this.config.key) {
+                            return await this.translateWithDoubao(text, sourceLang, targetLang);
+                        }
+                        return await this.translateWithMyMemory(text, sourceLang, targetLang);
+                    
+                    case 'baidu':
+                        if (this.config.appId && this.config.key) {
+                            return await this.translateWithBaidu(text, sourceLang, targetLang);
+                        }
+                        return await this.translateWithMyMemory(text, sourceLang, targetLang);
+                    
+                    case 'auto':
+                    default:
+                        return await this.translateWithMyMemory(text, sourceLang, targetLang);
+                }
+            }
+
+            async translateWithMyMemory(text, sourceLang, targetLang) {
+                const url = 'https://api.mymemory.translated.net/get';
+                
+                try {
+                    const response = await fetch(`${url}?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`);
+                    const data = await response.json();
+
+                    if (data.responseData && data.responseData.translatedText) {
+                        return {
+                            translatedText: data.responseData.translatedText,
+                            from: 'api',
+                            confidence: data.responseData.match || 0.8
+                        };
+                    } else {
+                        throw new Error('翻译失败，返回数据异常');
+                    }
+                } catch (error) {
+                    console.error('MyMemory API error:', error);
+                    throw new Error('翻译服务暂时不可用，请稍后重试');
+                }
+            }
+
+            async translateWithOpenAI(text, sourceLang, targetLang) {
+                const proxyUrl = this.config.proxyUrl || '';
+                let url = 'https://api.openai.com/v1/chat/completions';
+                
+                if (proxyUrl) {
+                    url = proxyUrl + url.replace('https://', '/');
+                }
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.config.key}`
+                        },
+                        body: JSON.stringify({
+                            model: 'gpt-4o-mini',
+                            messages: [{
+                                role: 'user',
+                                content: `Translate the following text from ${this.getLangName(sourceLang)} to ${this.getLangName(targetLang)}. Do not add any explanation or additional text, just provide the translation:\n\n${text}`
+                            }],
+                            max_tokens: 2048,
+                            temperature: 0.3
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.choices && data.choices.length > 0) {
+                        return {
+                            translatedText: data.choices[0].message.content.trim(),
+                            from: 'api'
+                        };
+                    } else if (data.error) {
+                        throw new Error(data.error.message || 'OpenAI API调用失败');
+                    } else {
+                        throw new Error('翻译失败，返回数据异常');
+                    }
+                } catch (error) {
+                    console.error('OpenAI API error:', error);
+                    throw new Error('OpenAI翻译服务暂时不可用，请检查API Key或配置CORS代理');
+                }
+            }
+
+            async translateWithDeepSeek(text, sourceLang, targetLang) {
+                const proxyUrl = this.config.proxyUrl || '';
+                let url = 'https://api.deepseek.com/v1/chat/completions';
+                
+                if (proxyUrl) {
+                    url = proxyUrl + url.replace('https://', '/');
+                }
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.config.key}`
+                        },
+                        body: JSON.stringify({
+                            model: 'deepseek-chat',
+                            messages: [{
+                                role: 'user',
+                                content: `Translate the following text from ${this.getLangName(sourceLang)} to ${this.getLangName(targetLang)}. Do not add any explanation or additional text, just provide the translation:\n\n${text}`
+                            }],
+                            max_tokens: 2048,
+                            temperature: 0.3
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.choices && data.choices.length > 0) {
+                        return {
+                            translatedText: data.choices[0].message.content.trim(),
+                            from: 'api'
+                        };
+                    } else if (data.error) {
+                        throw new Error(data.error.message || 'DeepSeek API调用失败');
+                    } else {
+                        throw new Error('翻译失败，返回数据异常');
+                    }
+                } catch (error) {
+                    console.error('DeepSeek API error:', error);
+                    throw new Error('DeepSeek翻译服务暂时不可用，请检查API Key或配置CORS代理');
+                }
+            }
+
+            async translateWithDoubao(text, sourceLang, targetLang) {
+                const proxyUrl = this.config.proxyUrl || '';
+                let url = 'https://api.doubao.com/v1/chat/completions';
+                
+                if (proxyUrl) {
+                    url = proxyUrl + url.replace('https://', '/');
+                }
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.config.key}`
+                        },
+                        body: JSON.stringify({
+                            model: 'doubao-3-mini',
+                            messages: [{
+                                role: 'user',
+                                content: `Translate the following text from ${this.getLangName(sourceLang)} to ${this.getLangName(targetLang)}. Do not add any explanation or additional text, just provide the translation:\n\n${text}`
+                            }],
+                            max_tokens: 2048,
+                            temperature: 0.3
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.choices && data.choices.length > 0) {
+                        return {
+                            translatedText: data.choices[0].message.content.trim(),
+                            from: 'api'
+                        };
+                    } else if (data.error) {
+                        throw new Error(data.error.message || '豆包API调用失败');
+                    } else {
+                        throw new Error('翻译失败，返回数据异常');
+                    }
+                } catch (error) {
+                    console.error('Doubao API error:', error);
+                    throw new Error('豆包翻译服务暂时不可用，请检查API Key或配置CORS代理');
+                }
+            }
+
+            async translateWithBaidu(text, sourceLang, targetLang) {
+                const baiduSource = this.getBaiduLangCode(sourceLang);
+                const baiduTarget = this.getBaiduLangCode(targetLang);
+
+                const salt = Date.now().toString();
+                const sign = this.generateSign(text, salt);
+
+                const url = `https://fanyi-api.baidu.com/api/trans/vip/translate`;
+
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    const callbackName = `translateCallback_${Date.now()}`;
+
+                    window[callbackName] = (response) => {
+                        document.body.removeChild(script);
+                        delete window[callbackName];
+
+                        if (response.error_code) {
+                            const errorMsg = this.getErrorMessage(response.error_code);
+                            reject(new Error(errorMsg));
+                        } else if (response.trans_result && response.trans_result.length > 0) {
+                            const result = response.trans_result[0].dst;
+                            resolve({ translatedText: result, from: 'api' });
+                        } else {
+                            reject(new Error('翻译失败，返回数据异常'));
+                        }
+                    };
+
+                    const params = new URLSearchParams({
+                        q: text,
+                        from: baiduSource,
+                        to: baiduTarget,
+                        appid: this.config.appId,
+                        salt: salt,
+                        sign: sign
+                    });
+
+                    script.src = `${url}?${params.toString()}&callback=${callbackName}`;
+                    script.onerror = () => {
+                        document.body.removeChild(script);
+                        delete window[callbackName];
+                        reject(new Error('百度API请求失败，建议切换到默认翻译服务'));
+                    };
+
+                    document.body.appendChild(script);
+
+                    setTimeout(() => {
+                        if (window[callbackName]) {
+                            document.body.removeChild(script);
+                            delete window[callbackName];
+                            reject(new Error('请求超时，请重试'));
+                        }
+                    }, 15000);
+                });
+            }
+
+            getLangName(code) {
+                const map = {
+                    'zh': 'Chinese',
+                    'en': 'English',
+                    'ja': 'Japanese',
+                    'ko': 'Korean'
+                };
+                return map[code] || code;
+            }
+
+            getBaiduLangCode(lang) {
+                const map = {
+                    'zh': 'zh',
+                    'en': 'en',
+                    'ja': 'jp',
+                    'ko': 'kor'
+                };
+                return map[lang] || lang;
+            }
+
+            generateSign(text, salt) {
+                const { appId, key } = this.config;
+                const str = `${appId}${text}${salt}${key}`;
+                return this.md5(str);
+            }
+
+            md5(string) {
+                const table = [
+                    0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
+                    0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
+                    0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
+                    0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
+                    0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa,
+                    0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
+                    0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed,
+                    0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
+                    0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c,
+                    0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
+                    0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05,
+                    0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+                    0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039,
+                    0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
+                    0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
+                    0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
+                ];
+
+                const s = [
+                    7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+                    5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
+                    4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
+                    6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21
+                ];
+
+                const add = (x, y) => {
+                    const lsw = (x & 0xFFFF) + (y & 0xFFFF);
+                    const msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+                    return (msw << 16) | (lsw & 0xFFFF);
+                };
+
+                const rotateLeft = (x, n) => (x << n) | (x >>> (32 - n));
+
+                const F = (x, y, z) => (x & y) | (~x & z);
+                const G = (x, y, z) => (x & z) | (y & ~z);
+                const H = (x, y, z) => x ^ y ^ z;
+                const I = (x, y, z) => y ^ (x | ~z);
+
+                const FF = (a, b, c, d, x, s, ac) => add(rotateLeft(add(add(a, F(b, c, d)), add(x, ac)), s), b);
+                const GG = (a, b, c, d, x, s, ac) => add(rotateLeft(add(add(a, G(b, c, d)), add(x, ac)), s), b);
+                const HH = (a, b, c, d, x, s, ac) => add(rotateLeft(add(add(a, H(b, c, d)), add(x, ac)), s), b);
+                const II = (a, b, c, d, x, s, ac) => add(rotateLeft(add(add(a, I(b, c, d)), add(x, ac)), s), b);
+
+                const toWordArray = (str) => {
+                    const words = [];
+                    let i = 0;
+                    for (; i < str.length * 8; i += 8) {
+                        words[i >> 5] |= (str.charCodeAt(i / 8) & 0xFF) << (i % 32);
+                    }
+                    words[i >> 5] |= 0x80 << (i % 32);
+                    words[(((i + 64) >>> 9) << 4) + 14] = str.length * 8;
+                    return words;
+                };
+
+                const wordToHex = (lValue) => {
+                    let wordToHexValue = '';
+                    const hexValue = '0123456789abcdef';
+                    for (let i = 0; i < 4; i++) {
+                        wordToHexValue += hexValue.charAt((lValue >> (i * 8 + 4)) & 0x0F);
+                        wordToHexValue += hexValue.charAt((lValue >> (i * 8)) & 0x0F);
+                    }
+                    return wordToHexValue;
+                };
+
+                let a = 0x67452301;
+                let b = 0xEFCDAB89;
+                let c = 0x98BADCFE;
+                let d = 0x10325476;
+
+                const x = toWordArray(string);
+
+                for (let i = 0; i < x.length; i += 16) {
+                    const aa = a;
+                    const bb = b;
+                    const cc = c;
+                    const dd = d;
+
+                    a = FF(a, b, c, d, x[i], s[0], table[0]);
+                    d = FF(d, a, b, c, x[i + 1], s[1], table[1]);
+                    c = FF(c, d, a, b, x[i + 2], s[2], table[2]);
+                    b = FF(b, c, d, a, x[i + 3], s[3], table[3]);
+                    a = FF(a, b, c, d, x[i + 4], s[4], table[4]);
+                    d = FF(d, a, b, c, x[i + 5], s[5], table[5]);
+                    c = FF(c, d, a, b, x[i + 6], s[6], table[6]);
+                    b = FF(b, c, d, a, x[i + 7], s[7], table[7]);
+                    a = FF(a, b, c, d, x[i + 8], s[8], table[8]);
+                    d = FF(d, a, b, c, x[i + 9], s[9], table[9]);
+                    c = FF(c, d, a, b, x[i + 10], s[10], table[10]);
+                    b = FF(b, c, d, a, x[i + 11], s[11], table[11]);
+                    a = FF(a, b, c, d, x[i + 12], s[12], table[12]);
+                    d = FF(d, a, b, c, x[i + 13], s[13], table[13]);
+                    c = FF(c, d, a, b, x[i + 14], s[14], table[14]);
+                    b = FF(b, c, d, a, x[i + 15], s[15], table[15]);
+
+                    a = GG(a, b, c, d, x[i + 1], s[16], table[16]);
+                    d = GG(d, a, b, c, x[i + 6], s[17], table[17]);
+                    c = GG(c, d, a, b, x[i + 11], s[18], table[18]);
+                    b = GG(b, c, d, a, x[i], s[19], table[19]);
+                    a = GG(a, b, c, d, x[i + 5], s[20], table[20]);
+                    d = GG(d, a, b, c, x[i + 10], s[21], table[21]);
+                    c = GG(c, d, a, b, x[i + 15], s[22], table[22]);
+                    b = GG(b, c, d, a, x[i + 4], s[23], table[23]);
+                    a = GG(a, b, c, d, x[i + 9], s[24], table[24]);
+                    d = GG(d, a, b, c, x[i + 14], s[25], table[25]);
+                    c = GG(c, d, a, b, x[i + 3], s[26], table[26]);
+                    b = GG(b, c, d, a, x[i + 8], s[27], table[27]);
+                    a = GG(a, b, c, d, x[i + 13], s[28], table[28]);
+                    d = GG(d, a, b, c, x[i + 2], s[29], table[29]);
+                    c = GG(c, d, a, b, x[i + 7], s[30], table[30]);
+                    b = GG(b, c, d, a, x[i + 12], s[31], table[31]);
+
+                    a = HH(a, b, c, d, x[i + 5], s[32], table[32]);
+                    d = HH(d, a, b, c, x[i + 8], s[33], table[33]);
+                    c = HH(c, d, a, b, x[i + 11], s[34], table[34]);
+                    b = HH(b, c, d, a, x[i + 14], s[35], table[35]);
+                    a = HH(a, b, c, d, x[i + 1], s[36], table[36]);
+                    d = HH(d, a, b, c, x[i + 4], s[37], table[37]);
+                    c = HH(c, d, a, b, x[i + 7], s[38], table[38]);
+                    b = HH(b, c, d, a, x[i + 10], s[39], table[39]);
+                    a = HH(a, b, c, d, x[i + 13], s[40], table[40]);
+                    d = HH(d, a, b, c, x[i], s[41], table[41]);
+                    c = HH(c, d, a, b, x[i + 3], s[42], table[42]);
+                    b = HH(b, c, d, a, x[i + 6], s[43], table[43]);
+                    a = HH(a, b, c, d, x[i + 9], s[44], table[44]);
+                    d = HH(d, a, b, c, x[i + 12], s[45], table[45]);
+                    c = HH(c, d, a, b, x[i + 15], s[46], table[46]);
+                    b = HH(b, c, d, a, x[i + 2], s[47], table[47]);
+
+                    a = II(a, b, c, d, x[i], s[48], table[48]);
+                    d = II(d, a, b, c, x[i + 7], s[49], table[49]);
+                    c = II(c, d, a, b, x[i + 14], s[50], table[50]);
+                    b = II(b, c, d, a, x[i + 5], s[51], table[51]);
+                    a = II(a, b, c, d, x[i + 12], s[52], table[52]);
+                    d = II(d, a, b, c, x[i + 3], s[53], table[53]);
+                    c = II(c, d, a, b, x[i + 10], s[54], table[54]);
+                    b = II(b, c, d, a, x[i + 1], s[55], table[55]);
+                    a = II(a, b, c, d, x[i + 8], s[56], table[56]);
+                    d = II(d, a, b, c, x[i + 15], s[57], table[57]);
+                    c = II(c, d, a, b, x[i + 6], s[58], table[58]);
+                    b = II(b, c, d, a, x[i + 13], s[59], table[59]);
+                    a = II(a, b, c, d, x[i + 4], s[60], table[60]);
+                    d = II(d, a, b, c, x[i + 11], s[61], table[61]);
+                    c = II(c, d, a, b, x[i + 2], s[62], table[62]);
+                    b = II(b, c, d, a, x[i + 9], s[63], table[63]);
+
+                    a = add(a, aa);
+                    b = add(b, bb);
+                    c = add(c, cc);
+                    d = add(d, dd);
+                }
+
+                return wordToHex(a) + wordToHex(b) + wordToHex(c) + wordToHex(d);
+            }
+
+            getErrorMessage(errorCode) {
+                const errors = {
+                    '52001': '请求超时，请重试',
+                    '52002': '系统错误，请重试',
+                    '52003': '未授权用户，请检查APP ID和密钥',
+                    '54000': '必填参数为空',
+                    '54001': '签名错误，请检查密钥',
+                    '54003': '访问频率受限',
+                    '54004': '账户余额不足',
+                    '54005': '长query请求频繁',
+                    '58000': '客户端IP非法',
+                    '58001': '译文语言方向不支持',
+                    '58002': '服务当前已关闭'
+                };
+                return errors[errorCode] || `API错误: ${errorCode}`;
+            }
+        }
+
+        const api = new TranslationAPI();
+
+        function renderTranslatePage() {
+            const container = document.getElementById('page-content');
+            
+            container.innerHTML = `
+                <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-soft p-6 card-hover">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                                <span class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                                    <i class="fa fa-file-text-o text-white"></i>
+                                </span>
+                                文本翻译
+                            </h2>
+                            <p class="text-gray-500 mt-1">支持多语言互译，优先匹配专业术语和记忆库</p>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-gray-500 bg-white/60 px-4 py-2 rounded-xl">
+                            <i class="fa fa-lightbulb-o text-amber-500"></i>
+                            <span>翻译优先级：专业语料库 > 翻译记忆库 > API</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-center gap-4 mb-6">
+                        <div class="flex-1 flex items-center gap-2">
+                            <select id="translate-source-lang" class="flex-1 px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                                ${LANGUAGES.map(lang => `<option value="${lang.code}" ${lang.code === 'zh' ? 'selected' : ''}>${lang.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <button onclick="swapLanguages()" class="p-3 bg-gradient-to-br from-primary/10 to-secondary/10 text-primary rounded-xl hover:from-primary/20 hover:to-secondary/20 transition-all-300 shadow-sm hover:shadow-md">
+                            <i class="fa fa-exchange text-lg"></i>
+                        </button>
+                        <div class="flex-1 flex items-center gap-2">
+                            <select id="translate-target-lang" class="flex-1 px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                                ${LANGUAGES.map(lang => `<option value="${lang.code}" ${lang.code === 'en' ? 'selected' : ''}>${lang.name}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-sm font-medium text-gray-700">原文输入</label>
+                                <button onclick="clearSource()" class="text-sm text-gray-400 hover:text-danger transition-all-300 px-3 py-1 rounded-lg hover:bg-red-50">
+                                    <i class="fa fa-trash"></i> 清空
+                                </button>
+                            </div>
+                            <textarea id="translate-input" rows="15" class="w-full px-4 py-4 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 resize-none scrollbar-thin bg-white/60 placeholder-gray-400" placeholder="请输入需要翻译的文本..."></textarea>
+                            <div class="flex items-center justify-between text-xs text-gray-400">
+                                <span>支持大段文本输入</span>
+                                <span id="input-char-count">0 字符</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-sm font-medium text-gray-700">译文输出</label>
+                                <button onclick="copyTranslation()" class="text-sm text-primary hover:text-primaryDark transition-all-300 flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-primary/5">
+                                    <i class="fa fa-copy"></i> 复制译文
+                                </button>
+                            </div>
+                            <div id="translate-output" class="w-full h-[340px] px-4 py-4 border border-gray-100 rounded-xl overflow-y-auto scrollbar-thin bg-gradient-to-br from-indigo-50/50 to-sky-50/50">
+                                <div class="flex items-center justify-center h-full text-gray-400">
+                                    翻译结果将显示在这里...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6">
+                        <button onclick="doTranslate()" id="translate-btn" class="flex-1 sm:flex-none min-w-[200px] px-8 py-4 btn-gradient text-white rounded-xl font-medium hover:shadow-xl hover:scale-[1.02] transition-all-300 flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+                            <i class="fa fa-language"></i>
+                            开始翻译
+                        </button>
+                    </div>
+
+                    <div id="translate-status" class="mt-4 text-center text-sm text-gray-500 hidden">
+                        <span class="loading-dots">
+                            <span>.</span><span>.</span><span>.</span>
+                        </span>
+                        <span id="status-text">正在翻译中...</span>
+                    </div>
+
+                    <div class="mt-6 bg-gradient-to-r from-indigo-50/60 via-white/60 to-sky-50/60 rounded-xl p-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="text-center p-3 bg-white/80 rounded-xl">
+                                <div class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent" id="stat-memory">0</div>
+                                <div class="text-sm text-gray-500 mt-1">记忆库条目</div>
+                            </div>
+                            <div class="text-center p-3 bg-white/80 rounded-xl">
+                                <div class="text-2xl font-bold bg-gradient-to-r from-accent to-mint bg-clip-text text-transparent" id="stat-corpus">0</div>
+                                <div class="text-sm text-gray-500 mt-1">语料库术语</div>
+                            </div>
+                            <div class="text-center p-3 bg-white/80 rounded-xl">
+                                <div class="text-2xl font-bold bg-gradient-to-r from-mint to-success bg-clip-text text-transparent" id="stat-api">API</div>
+                                <div class="text-sm text-gray-500 mt-1">翻译接口</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('translate-input').addEventListener('input', () => {
+                const count = document.getElementById('translate-input').value.length;
+                document.getElementById('input-char-count').textContent = `${count} 字符`;
+            });
+
+            updateStats();
+        }
+
+        function updateStats() {
+            const memoryCount = storage.getMemory().length;
+            const corpusCount = storage.getCorpus().length;
+            
+            if (document.getElementById('stat-memory')) {
+                document.getElementById('stat-memory').textContent = memoryCount;
+            }
+            if (document.getElementById('stat-corpus')) {
+                document.getElementById('stat-corpus').textContent = corpusCount;
+            }
+        }
+
+        function swapLanguages() {
+            const sourceSelect = document.getElementById('translate-source-lang');
+            const targetSelect = document.getElementById('translate-target-lang');
+            const sourceText = document.getElementById('translate-input');
+            const targetText = document.getElementById('translate-output');
+
+            const tempLang = sourceSelect.value;
+            sourceSelect.value = targetSelect.value;
+            targetSelect.value = tempLang;
+
+            const tempText = sourceText.value;
+            sourceText.value = targetText.textContent === '翻译结果将显示在这里...' ? '' : targetText.textContent;
+            targetText.innerHTML = tempText ? `<div class="flex items-center justify-center h-full text-gray-400">${tempText}</div>` : '<div class="flex items-center justify-center h-full text-gray-400">翻译结果将显示在这里...</div>';
+        }
+
+        function clearSource() {
+            document.getElementById('translate-input').value = '';
+            document.getElementById('input-char-count').textContent = '0 字符';
+            document.getElementById('translate-output').innerHTML = '<div class="flex items-center justify-center h-full text-gray-400">翻译结果将显示在这里...</div>';
+        }
+
+        async function copyTranslation() {
+            const output = document.getElementById('translate-output').textContent;
+            
+            if (!output || output === '翻译结果将显示在这里...') {
+                showToast('没有可复制的内容', 'warning');
+                return;
+            }
+
+            try {
+                await copyToClipboard(output);
+                showToast('译文已复制到剪贴板', 'success');
+            } catch (err) {
+                showToast('复制失败，请手动复制', 'error');
+            }
+        }
+
+        async function doTranslate() {
+            const input = document.getElementById('translate-input').value.trim();
+            const sourceLang = document.getElementById('translate-source-lang').value;
+            const targetLang = document.getElementById('translate-target-lang').value;
+            const btn = document.getElementById('translate-btn');
+            const status = document.getElementById('translate-status');
+            const statusText = document.getElementById('status-text');
+            const output = document.getElementById('translate-output');
+
+            if (!input) {
+                showToast('请输入需要翻译的文本', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> 翻译中...`;
+            status.classList.remove('hidden');
+
+            try {
+                const result = await translateWithPriority(input, sourceLang, targetLang);
+                
+                statusText.textContent = `翻译完成（来源：${getTranslationSourceLabel(result.from)}）`;
+                output.innerHTML = `<div class="whitespace-pre-wrap text-gray-800">${escapeHtml(result.translatedText)}</div>`;
+
+                if (result.from !== 'memory') {
+                    storage.addMemoryItem({
+                        source: input,
+                        target: result.translatedText,
+                        sourceLang,
+                        targetLang
+                    });
+                }
+
+                showToast('翻译成功', 'success');
+
+            } catch (error) {
+                statusText.textContent = '翻译失败';
+                output.innerHTML = `<div class="text-red-500 text-center h-full flex items-center justify-center">${escapeHtml(error.message)}</div>`;
+                showToast(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa fa-language"></i> 开始翻译`;
+                updateStats();
+            }
+        }
+
+        async function translateWithPriority(text, sourceLang, targetLang) {
+            const corpusResult = storage.replaceCorpusTerms(text);
+            
+            const memoryMatch = storage.getMemoryBySource(text, sourceLang, targetLang);
+            if (memoryMatch) {
+                return {
+                    translatedText: storage.replaceCorpusTerms(memoryMatch.target),
+                    from: 'memory'
+                };
+            }
+
+            const apiResult = await api.translate(corpusResult, sourceLang, targetLang);
+            
+            return {
+                translatedText: storage.replaceCorpusTerms(apiResult.translatedText),
+                from: apiResult.from
+            };
+        }
+
+        function getTranslationSourceLabel(source) {
+            const labels = {
+                'memory': '翻译记忆库',
+                'api': 'MyMemory翻译API',
+                'same-lang': '相同语言',
+                'corpus': '专业语料库'
+            };
+            return labels[source] || source;
+        }
+
+        function renderMemoryPage() {
+            const container = document.getElementById('page-content');
+            const memory = storage.getMemory();
+            
+            container.innerHTML = `
+                <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-soft p-6 card-hover">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                                <span class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                                    <i class="fa fa-database text-white"></i>
+                                </span>
+                                翻译记忆库
+                            </h2>
+                            <p class="text-gray-500 mt-1">自动保存翻译记录，相同内容优先读取缓存</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="exportMemory()" class="px-4 py-2.5 bg-white text-primary border border-primary/20 rounded-xl hover:bg-primary/5 hover:border-primary/40 transition-all-300 flex items-center gap-2 shadow-sm">
+                                <i class="fa fa-download"></i>
+                                导出JSON
+                            </button>
+                            <button onclick="clearMemory()" class="px-4 py-2.5 bg-white text-danger border border-danger/20 rounded-xl hover:bg-danger/5 hover:border-danger/40 transition-all-300 flex items-center gap-2 shadow-sm">
+                                <i class="fa fa-trash"></i>
+                                清空全部
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                        <div class="flex-1 relative">
+                            <i class="fa fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="memory-search" placeholder="搜索翻译记录..." class="w-full pl-12 pr-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                        </div>
+                        <div class="flex gap-2">
+                            <select id="memory-source-lang" class="px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                                <option value="">源语种</option>
+                                ${LANGUAGES.map(lang => `<option value="${lang.code}">${lang.name}</option>`).join('')}
+                            </select>
+                            <select id="memory-target-lang" class="px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                                <option value="">目标语种</option>
+                                ${LANGUAGES.map(lang => `<option value="${lang.code}">${lang.name}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid gap-4" id="memory-list">
+                        ${renderMemoryList(memory)}
+                    </div>
+
+                    ${memory.length === 0 ? `
+                        <div class="text-center py-16">
+                            <div class="w-20 h-20 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fa fa-database text-primary text-3xl"></i>
+                            </div>
+                            <p class="text-gray-500 text-lg">暂无翻译记录</p>
+                            <p class="text-gray-400 text-sm mt-2">使用文本翻译功能后，记录会自动保存到这里</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('memory-search').addEventListener('input', debounce(() => {
+                const query = document.getElementById('memory-search').value;
+                const sourceLang = document.getElementById('memory-source-lang').value;
+                const targetLang = document.getElementById('memory-target-lang').value;
+                const filtered = storage.searchMemory(query, sourceLang, targetLang);
+                document.getElementById('memory-list').innerHTML = renderMemoryList(filtered);
+            }, 300));
+
+            document.getElementById('memory-source-lang').addEventListener('change', () => {
+                const query = document.getElementById('memory-search').value;
+                const sourceLang = document.getElementById('memory-source-lang').value;
+                const targetLang = document.getElementById('memory-target-lang').value;
+                const filtered = storage.searchMemory(query, sourceLang, targetLang);
+                document.getElementById('memory-list').innerHTML = renderMemoryList(filtered);
+            });
+
+            document.getElementById('memory-target-lang').addEventListener('change', () => {
+                const query = document.getElementById('memory-search').value;
+                const sourceLang = document.getElementById('memory-source-lang').value;
+                const targetLang = document.getElementById('memory-target-lang').value;
+                const filtered = storage.searchMemory(query, sourceLang, targetLang);
+                document.getElementById('memory-list').innerHTML = renderMemoryList(filtered);
+            });
+        }
+
+        function renderMemoryList(memory) {
+            if (!memory || memory.length === 0) {
+                return '<div class="text-center py-8 text-gray-500">无匹配结果</div>';
+            }
+
+            return memory.map(item => `
+                <div class="bg-gradient-to-r from-indigo-50/40 to-sky-50/40 rounded-xl p-5 border border-indigo-100/50 hover:shadow-lg hover:-translate-y-1 transition-all-300">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-xs font-semibold px-2.5 py-1 bg-white text-gray-600 rounded-full shadow-sm">
+                                    ${getLangName(item.sourceLang)} → ${getLangName(item.targetLang)}
+                                </span>
+                                <span class="text-xs text-gray-400">${formatDate(item.timestamp)}</span>
+                            </div>
+                            <div class="text-gray-800 mb-2">
+                                <span class="text-sm font-medium text-gray-500">原文：</span>
+                                <span>${escapeHtml(item.source)}</span>
+                            </div>
+                            <div class="text-primary">
+                                <span class="text-sm font-medium text-gray-500">译文：</span>
+                                <span>${escapeHtml(item.target)}</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button onclick="copyToClipboard('${escapeHtml(item.target)}').then(() => showToast('译文已复制', 'success'))" class="px-3 py-2 bg-white text-gray-700 border border-gray-100 rounded-lg text-sm hover:bg-gray-50 hover:border-gray-200 transition-all-300 flex items-center justify-center gap-1 shadow-sm">
+                                <i class="fa fa-copy w-4"></i>
+                                复制译文
+                            </button>
+                            <button onclick="removeMemoryItem('${item.id}')" class="px-3 py-2 bg-white text-danger border border-danger/10 rounded-lg text-sm hover:bg-danger/5 hover:border-danger/30 transition-all-300 flex items-center justify-center gap-1 shadow-sm">
+                                <i class="fa fa-trash w-4"></i>
+                                删除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getLangName(code) {
+            const lang = LANGUAGES.find(l => l.code === code);
+            return lang ? lang.name : code;
+        }
+
+        function removeMemoryItem(id) {
+            showModal('确认删除', '确定要删除这条翻译记录吗？', () => {
+                storage.removeMemoryItem(id);
+                showToast('记录删除成功', 'success');
+                renderMemoryPage();
+            });
+        }
+
+        function clearMemory() {
+            showModal('确认清空', '确定要清空所有翻译记录吗？此操作不可恢复。', () => {
+                storage.clearMemory();
+                showToast('记忆库已清空', 'success');
+                renderMemoryPage();
+            });
+        }
+
+        function exportMemory() {
+            const memory = storage.getMemory();
+            const jsonData = JSON.stringify(memory, null, 2);
+            downloadFile(jsonData, 'linguaflow-memory.json', 'application/json');
+            showToast('记忆库导出成功', 'success');
+        }
+
+        function renderCorpusPage() {
+            const container = document.getElementById('page-content');
+            const corpus = storage.getCorpus();
+            
+            container.innerHTML = `
+                <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-soft p-6 card-hover">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                                <span class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                                    <i class="fa fa-book text-white"></i>
+                                </span>
+                                专业语料库
+                            </h2>
+                            <p class="text-gray-500 mt-1">管理专业术语词条，翻译时优先匹配替换</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="importCorpus()" class="px-4 py-2.5 bg-white text-primary border border-primary/20 rounded-xl hover:bg-primary/5 hover:border-primary/40 transition-all-300 flex items-center gap-2 shadow-sm">
+                                <i class="fa fa-upload"></i>
+                                批量导入
+                            </button>
+                            <button onclick="exportCorpus()" class="px-4 py-2.5 bg-white text-primary border border-primary/20 rounded-xl hover:bg-primary/5 hover:border-primary/40 transition-all-300 flex items-center gap-2 shadow-sm">
+                                <i class="fa fa-download"></i>
+                                导出JSON
+                            </button>
+                            <button onclick="openAddCorpusModal()" class="px-4 py-2.5 btn-gradient text-white rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all-300 flex items-center gap-2">
+                                <i class="fa fa-plus"></i>
+                                新增词条
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                        <div class="flex-1 relative">
+                            <i class="fa fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="corpus-search" placeholder="搜索术语..." class="w-full pl-12 pr-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                        </div>
+                        <select id="corpus-industry-filter" class="px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                            <option value="">全部分类</option>
+                            ${INDUSTRIES.map(ind => `<option value="${ind.value}">${ind.label}</option>`).join('')}
+                        </select>
+                        <button onclick="clearCorpus()" class="px-4 py-2.5 bg-white text-danger border border-danger/20 rounded-xl hover:bg-danger/5 hover:border-danger/40 transition-all-300 flex items-center gap-2 shadow-sm">
+                            <i class="fa fa-trash"></i>
+                            清空全部
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-indigo-50/50 border-b border-indigo-100">
+                                    <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">原文术语</th>
+                                    <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">译文术语</th>
+                                    <th class="text-left px-4 py-3 text-sm font-semibold text-gray-600">所属分类</th>
+                                    <th class="text-center px-4 py-3 text-sm font-semibold text-gray-600">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corpus-table-body">
+                                ${renderCorpusTable(corpus)}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    ${corpus.length === 0 ? `
+                        <div class="text-center py-16">
+                            <div class="w-20 h-20 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fa fa-book text-primary text-3xl"></i>
+                            </div>
+                            <p class="text-gray-500 text-lg">暂无术语词条</p>
+                            <p class="text-gray-400 text-sm mt-2">点击上方按钮添加专业术语</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('corpus-search').addEventListener('input', debounce(() => {
+                const query = document.getElementById('corpus-search').value;
+                const industry = document.getElementById('corpus-industry-filter').value;
+                const filtered = storage.searchCorpus(query, industry);
+                document.getElementById('corpus-table-body').innerHTML = renderCorpusTable(filtered);
+            }, 300));
+
+            document.getElementById('corpus-industry-filter').addEventListener('change', () => {
+                const query = document.getElementById('corpus-search').value;
+                const industry = document.getElementById('corpus-industry-filter').value;
+                const filtered = storage.searchCorpus(query, industry);
+                document.getElementById('corpus-table-body').innerHTML = renderCorpusTable(filtered);
+            });
+        }
+
+        function renderCorpusTable(corpus) {
+            if (!corpus || corpus.length === 0) {
+                return '<tr><td colspan="4" class="text-center py-8 text-gray-500">无匹配结果</td></tr>';
+            }
+
+            return corpus.map(item => `
+                <tr class="border-b border-indigo-50/50 hover:bg-indigo-50/30 transition-all-300">
+                    <td class="px-4 py-3">
+                        <span class="font-medium text-gray-800">${escapeHtml(item.source)}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-primary font-medium">${escapeHtml(item.target)}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full ${getIndustryClass(item.industry)}">
+                            ${getIndustryLabel(item.industry)}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex justify-center gap-2">
+                            <button onclick="openEditCorpusModal('${item.id}')" class="p-2 bg-white text-primary border border-primary/10 hover:bg-primary/5 hover:border-primary/30 rounded-lg transition-all-300 shadow-sm" title="编辑">
+                                <i class="fa fa-edit"></i>
+                            </button>
+                            <button onclick="removeCorpusItem('${item.id}')" class="p-2 bg-white text-danger border border-danger/10 hover:bg-danger/5 hover:border-danger/30 rounded-lg transition-all-300 shadow-sm" title="删除">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getIndustryClass(industry) {
+            const classes = {
+                'it': 'bg-blue-100 text-blue-700',
+                'education': 'bg-green-100 text-green-700',
+                'medical': 'bg-pink-100 text-pink-700',
+                'general': 'bg-gray-100 text-gray-700'
+            };
+            return classes[industry] || classes['general'];
+        }
+
+        function getIndustryLabel(industry) {
+            const labels = {
+                'it': 'IT技术',
+                'education': '教育培训',
+                'medical': '医疗健康',
+                'general': '通用领域'
+            };
+            return labels[industry] || '未知分类';
+        }
+
+        function openAddCorpusModal() {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            modalContent.innerHTML = `
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">新增术语词条</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fa fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">原文术语</label>
+                            <input type="text" id="corpus-source" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">译文术语</label>
+                            <input type="text" id="corpus-target" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">所属分类</label>
+                            <select id="corpus-industry" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                ${INDUSTRIES.map(ind => `<option value="${ind.value}">${ind.label}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button onclick="closeModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300">取消</button>
+                        <button onclick="saveCorpusItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primaryDark transition-all-300">保存</button>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+        }
+
+        function openEditCorpusModal(id) {
+            const item = storage.getCorpus().find(i => i.id === id);
+            if (!item) return;
+
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            modalContent.innerHTML = `
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">编辑术语词条</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fa fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" id="corpus-id" value="${id}">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">原文术语</label>
+                            <input type="text" id="corpus-source" value="${escapeHtml(item.source)}" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">译文术语</label>
+                            <input type="text" id="corpus-target" value="${escapeHtml(item.target)}" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">所属分类</label>
+                            <select id="corpus-industry" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                ${INDUSTRIES.map(ind => `<option value="${ind.value}" ${ind.value === item.industry ? 'selected' : ''}>${ind.label}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button onclick="closeModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300">取消</button>
+                        <button onclick="updateCorpusItem()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primaryDark transition-all-300">保存</button>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+        }
+
+        function saveCorpusItem() {
+            const source = document.getElementById('corpus-source').value.trim();
+            const target = document.getElementById('corpus-target').value.trim();
+            const industry = document.getElementById('corpus-industry').value;
+
+            if (!source || !target) {
+                showToast('请填写完整的术语信息', 'warning');
+                return;
+            }
+
+            storage.addCorpusItem({ source, target, industry });
+            showToast('术语添加成功', 'success');
+            closeModal();
+            renderCorpusPage();
+        }
+
+        function updateCorpusItem() {
+            const id = document.getElementById('corpus-id').value;
+            const source = document.getElementById('corpus-source').value.trim();
+            const target = document.getElementById('corpus-target').value.trim();
+            const industry = document.getElementById('corpus-industry').value;
+
+            if (!source || !target) {
+                showToast('请填写完整的术语信息', 'warning');
+                return;
+            }
+
+            storage.updateCorpusItem(id, { source, target, industry });
+            showToast('术语更新成功', 'success');
+            closeModal();
+            renderCorpusPage();
+        }
+
+        function removeCorpusItem(id) {
+            showModal('确认删除', '确定要删除这条术语吗？', () => {
+                storage.removeCorpusItem(id);
+                showToast('术语删除成功', 'success');
+                renderCorpusPage();
+            });
+        }
+
+        function clearCorpus() {
+            showModal('确认清空', '确定要清空所有术语吗？此操作不可恢复。', () => {
+                storage.clearCorpus();
+                showToast('语料库已清空', 'success');
+                renderCorpusPage();
+            });
+        }
+
+        function importCorpus() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.txt,.csv';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const content = event.target.result;
+                    const lines = content.split('\n');
+                    let importedCount = 0;
+
+                    lines.forEach(line => {
+                        line = line.trim();
+                        if (!line || line.startsWith('#')) return;
+
+                        const parts = line.split(/[,，\t]/);
+                        if (parts.length >= 2) {
+                            const source = parts[0].trim();
+                            const target = parts[1].trim();
+                            const industry = parts[2] ? parts[2].trim() : 'general';
+
+                            if (source && target) {
+                                storage.addCorpusItem({ source, target, industry });
+                                importedCount++;
+                            }
+                        }
+                    });
+
+                    showToast(`成功导入 ${importedCount} 条术语`, 'success');
+                    renderCorpusPage();
+                };
+                reader.readAsText(file, 'UTF-8');
+            };
+            input.click();
+        }
+
+        function exportCorpus() {
+            const corpus = storage.getCorpus();
+            const jsonData = JSON.stringify(corpus, null, 2);
+            downloadFile(jsonData, 'linguaflow-corpus.json', 'application/json');
+            showToast('语料库导出成功', 'success');
+        }
+
+        function renderSubtitlePage() {
+            const container = document.getElementById('page-content');
+            
+            container.innerHTML = `
+                <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-soft p-6 card-hover">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                                <span class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                                    <i class="fa fa-closed-captioning text-white"></i>
+                                </span>
+                                实时字幕翻译
+                            </h2>
+                            <p class="text-gray-500 mt-1">粘贴SRT字幕文本，批量翻译并导出</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="downloadSubtitle()" class="px-4 py-2.5 bg-white text-primary border border-primary/20 rounded-xl hover:bg-primary/5 hover:border-primary/40 transition-all-300 flex items-center gap-2 shadow-sm">
+                                <i class="fa fa-download"></i>
+                                导出字幕
+                            </button>
+                            <button onclick="clearSubtitle()" class="px-4 py-2.5 bg-white text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all-300 flex items-center gap-2 shadow-sm">
+                                <i class="fa fa-trash"></i>
+                                清空内容
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                        <select id="subtitle-source-lang" class="flex-1 sm:flex-none px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                            <option value="en">英文字幕</option>
+                            <option value="zh">中文字幕</option>
+                            <option value="ja">日文字幕</option>
+                            <option value="ko">韩文字幕</option>
+                        </select>
+                        <select id="subtitle-target-lang" class="flex-1 sm:flex-none px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                            <option value="zh">翻译为中文</option>
+                            <option value="en">翻译为英语</option>
+                            <option value="ja">翻译为日语</option>
+                            <option value="ko">翻译为韩语</option>
+                        </select>
+                        <button onclick="translateSubtitle()" id="subtitle-translate-btn" class="flex-1 sm:flex-none px-6 py-3 btn-gradient text-white rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all-300 flex items-center justify-center gap-2">
+                            <i class="fa fa-language"></i>
+                            一键翻译全部
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-700">原文字幕 (SRT格式)</label>
+                            <textarea id="subtitle-input" rows="20" class="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 resize-none scrollbar-thin bg-white/80" placeholder="在此粘贴标准SRT字幕文本...&#10;&#10;示例格式：&#10;1&#10;00:00:01,000 --> 00:00:04,000&#10;Hello, welcome to our translation system.&#10;&#10;2&#10;00:00:05,000 --> 00:00:08,000&#10;This is a subtitle example."></textarea>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-700">译文字幕 (翻译后)</label>
+                            <textarea id="subtitle-output" rows="20" class="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 resize-none scrollbar-thin bg-white/80" placeholder="翻译结果将显示在这里..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-gradient-to-r from-indigo-50/60 to-sky-50/60 rounded-xl p-5 border border-indigo-100/50">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-info-circle text-primary text-xs"></i>
+                            </span>
+                            使用说明
+                        </h3>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• 粘贴标准SRT格式的字幕文本到左侧输入框</li>
+                            <li>• 系统会自动识别时间轴，只翻译字幕内容</li>
+                            <li>• 点击"一键翻译全部"批量翻译所有字幕</li>
+                            <li>• 翻译后的字幕保留原始时间轴格式，可直接用于视频剪辑</li>
+                            <li>• 支持导出为TXT文件，方便后续使用</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderOcrPage() {
+            const container = document.getElementById('page-content');
+            
+            container.innerHTML = `
+                <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-soft p-6 card-hover">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                                <span class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                                    <i class="fa fa-camera text-white"></i>
+                                </span>
+                                OCR识别翻译
+                            </h2>
+                            <p class="text-gray-500 mt-1">上传图片识别文字，自动翻译并导出结果</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="copyOcrResult()" class="px-4 py-2.5 bg-white text-primary border border-primary/20 rounded-xl hover:bg-primary/5 hover:border-primary/40 transition-all-300 flex items-center gap-2 shadow-sm">
+                                <i class="fa fa-copy"></i>
+                                复制结果
+                            </button>
+                            <button onclick="clearOcr()" class="px-4 py-2.5 bg-white text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all-300 flex items-center gap-2 shadow-sm">
+                                <i class="fa fa-trash"></i>
+                                清空内容
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                        <select id="ocr-source-lang" class="flex-1 sm:flex-none px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                            <option value="eng">英文识别</option>
+                            <option value="chi_sim">中文识别</option>
+                            <option value="jpn">日文识别</option>
+                            <option value="kor">韩文识别</option>
+                            <option value="eng+chi_sim">中英混合识别</option>
+                        </select>
+                        <select id="ocr-target-lang" class="flex-1 sm:flex-none px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                            <option value="zh">翻译为中文</option>
+                            <option value="en">翻译为英语</option>
+                            <option value="ja">翻译为日语</option>
+                            <option value="ko">翻译为韩语</option>
+                        </select>
+                        <button onclick="translateOcrText()" id="ocr-translate-btn" class="flex-1 sm:flex-none px-6 py-3 btn-gradient text-white rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all-300 flex items-center justify-center gap-2">
+                            <i class="fa fa-language"></i>
+                            翻译识别结果
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-1 space-y-4">
+                            <div class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-primary/50 hover:bg-primary/5 transition-all-300 cursor-pointer" onclick="triggerOcrUpload()">
+                                <div class="w-16 h-16 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fa fa-image text-primary text-3xl"></i>
+                                </div>
+                                <p class="text-gray-600 mb-2">点击上传图片</p>
+                                <p class="text-sm text-gray-400">支持 JPG、PNG、BMP 格式</p>
+                                <input type="file" id="ocr-file-input" accept="image/*" class="hidden" onchange="handleOcrFileSelect(event)">
+                            </div>
+                            
+                            <div id="ocr-image-preview" class="hidden">
+                                <img id="ocr-preview-img" class="w-full rounded-xl border border-gray-100" alt="预览">
+                                <button onclick="clearOcrImage()" class="mt-2 w-full px-4 py-2.5 bg-white text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all-300 text-sm shadow-sm">
+                                    移除图片
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-700">识别文字</label>
+                            <textarea id="ocr-text" rows="20" class="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 resize-none scrollbar-thin bg-white/80" placeholder="识别结果将显示在这里..."></textarea>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-700">翻译结果</label>
+                            <textarea id="ocr-translation" rows="20" class="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 resize-none scrollbar-thin bg-white/80" placeholder="翻译结果将显示在这里..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-gradient-to-r from-indigo-50/60 to-sky-50/60 rounded-xl p-5 border border-indigo-100/50">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-info-circle text-primary text-xs"></i>
+                            </span>
+                            使用说明
+                        </h3>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• 点击左侧上传区域选择图片文件</li>
+                            <li>• 系统使用Tesseract.js进行OCR文字识别</li>
+                            <li>• 识别完成后文字显示在中间文本框</li>
+                            <li>• 点击"翻译识别结果"进行翻译</li>
+                            <li>• 支持手动编辑识别结果后再翻译</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4 bg-gradient-to-r from-amber-50/60 to-orange-50/60 rounded-xl p-5 border border-amber-100/50">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-warning/10 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-lightbulb-o text-warning text-xs"></i>
+                            </span>
+                            提示
+                        </h3>
+                        <p class="text-sm text-gray-600">首次使用OCR功能需要下载识别模型（约2-5MB），请确保网络连接正常。识别速度取决于图片大小和文字复杂度。</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPptPage() {
+            const container = document.getElementById('page-content');
+            
+            container.innerHTML = `
+                <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-soft p-6 card-hover">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                                <span class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                                    <i class="fa fa-file-powerpoint-o text-white"></i>
+                                </span>
+                                PPT翻译工作台
+                            </h2>
+                            <p class="text-gray-500 mt-1">上传PPT文件，提取文本并批量翻译</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="exportPptTranslations()" class="px-4 py-2.5 bg-white text-primary border border-primary/20 rounded-xl hover:bg-primary/5 hover:border-primary/40 transition-all-300 flex items-center gap-2 shadow-sm">
+                                <i class="fa fa-download"></i>
+                                导出翻译结果
+                            </button>
+                            <button onclick="clearPpt()" class="px-4 py-2.5 bg-white text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all-300 flex items-center gap-2 shadow-sm">
+                                <i class="fa fa-trash"></i>
+                                清空内容
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                        <select id="ppt-source-lang" class="flex-1 sm:flex-none px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                            <option value="en">英文PPT</option>
+                            <option value="zh">中文PPT</option>
+                            <option value="ja">日文PPT</option>
+                            <option value="ko">韩文PPT</option>
+                        </select>
+                        <select id="ppt-target-lang" class="flex-1 sm:flex-none px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                            <option value="zh">翻译为中文</option>
+                            <option value="en">翻译为英语</option>
+                            <option value="ja">翻译为日语</option>
+                            <option value="ko">翻译为韩语</option>
+                        </select>
+                        <button onclick="translatePptTexts()" id="ppt-translate-btn" class="flex-1 sm:flex-none px-6 py-3 btn-gradient text-white rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all-300 flex items-center justify-center gap-2">
+                            <i class="fa fa-language"></i>
+                            批量翻译全部
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-1 space-y-4">
+                            <div class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-primary/50 hover:bg-primary/5 transition-all-300 cursor-pointer" onclick="triggerPptUpload()">
+                                <div class="w-16 h-16 bg-gradient-to-br from-mint/10 to-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fa fa-file-powerpoint-o text-mint text-3xl"></i>
+                                </div>
+                                <p class="text-gray-600 mb-2">点击上传PPT文件</p>
+                                <p class="text-sm text-gray-400">支持 .pptx 格式</p>
+                                <input type="file" id="ppt-file-input" accept=".pptx" class="hidden" onchange="handlePptFileSelect(event)">
+                            </div>
+                            
+                            <div id="ppt-info" class="hidden bg-gradient-to-r from-indigo-50/60 to-sky-50/60 rounded-xl p-4 border border-indigo-100/50">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-2">PPT信息</h4>
+                                <div class="text-sm text-gray-600 space-y-1">
+                                    <div id="ppt-slide-count">幻灯片数量: 0</div>
+                                    <div id="ppt-text-count">文本数量: 0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-700">原文文本</label>
+                            <textarea id="ppt-source-text" rows="20" class="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 resize-none scrollbar-thin bg-white/80" placeholder="PPT提取的文本将显示在这里..."></textarea>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="block text-sm font-medium text-gray-700">翻译结果</label>
+                            <textarea id="ppt-target-text" rows="20" class="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 resize-none scrollbar-thin bg-white/80" placeholder="翻译结果将显示在这里..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-gradient-to-r from-indigo-50/60 to-sky-50/60 rounded-xl p-5 border border-indigo-100/50">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-info-circle text-primary text-xs"></i>
+                            </span>
+                            使用说明
+                        </h3>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• 点击左侧上传区域选择 .pptx 格式的PPT文件</li>
+                            <li>• 系统使用JSZip解析PPT文件，提取所有文本内容</li>
+                            <li>• 提取完成后原文显示在中间文本框</li>
+                            <li>• 点击"批量翻译全部"进行全文翻译</li>
+                            <li>• 支持导出翻译结果为TXT文件</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4 bg-gradient-to-r from-amber-50/60 to-orange-50/60 rounded-xl p-5 border border-amber-100/50">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-warning/10 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-lightbulb-o text-warning text-xs"></i>
+                            </span>
+                            提示
+                        </h3>
+                        <p class="text-sm text-gray-600">PPT文件越大，解析时间越长。建议先压缩PPT文件（去除不必要的图片）后再上传。本功能仅提取文本内容，不修改原PPT文件格式。</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function translateSubtitle() {
+            const input = document.getElementById('subtitle-input').value;
+            const sourceLang = document.getElementById('subtitle-source-lang').value;
+            const targetLang = document.getElementById('subtitle-target-lang').value;
+            const btn = document.getElementById('subtitle-translate-btn');
+
+            if (!input.trim()) {
+                showToast('请输入字幕内容', 'warning');
+                return;
+            }
+
+            const subtitles = parseSRT(input);
+            
+            if (subtitles.length === 0) {
+                showToast('无法识别字幕格式，请检查SRT格式是否正确', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> 翻译中...`;
+
+            let translatedCount = 0;
+
+            for (let i = 0; i < subtitles.length; i++) {
+                try {
+                    const result = await translateWithPriority(subtitles[i].text, sourceLang, targetLang);
+                    subtitles[i].text = result.translatedText;
+                    translatedCount++;
+                    
+                    document.getElementById('subtitle-output').value = formatSRT(subtitles);
+                } catch (error) {
+                    console.error(`翻译第 ${i + 1} 条字幕失败:`, error);
+                }
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa fa-language"></i> 一键翻译全部`;
+            showToast(`成功翻译 ${translatedCount} 条字幕`, 'success');
+        }
+
+        function downloadSubtitle() {
+            const output = document.getElementById('subtitle-output').value;
+            
+            if (!output.trim()) {
+                showToast('没有可导出的内容', 'warning');
+                return;
+            }
+
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            downloadFile(output, `linguaflow-subtitle-${timestamp}.txt`, 'text/plain');
+            showToast('字幕导出成功', 'success');
+        }
+
+        function clearSubtitle() {
+            document.getElementById('subtitle-input').value = '';
+            document.getElementById('subtitle-output').value = '';
+            showToast('内容已清空', 'info');
+        }
+
+        function triggerOcrUpload() {
+            document.getElementById('ocr-file-input').click();
+        }
+
+        async function handleOcrFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const preview = document.getElementById('ocr-image-preview');
+            const previewImg = document.getElementById('ocr-preview-img');
+            const uploadArea = document.querySelector('#ocr-image-preview').previousElementSibling;
+            
+            uploadArea.classList.add('hidden');
+            preview.classList.remove('hidden');
+            
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                previewImg.src = e.target.result;
+                
+                showToast('正在识别图片文字...', 'info');
+                
+                try {
+                    const lang = document.getElementById('ocr-source-lang').value;
+                    const worker = await Tesseract.createWorker(lang);
+                    const { data: { text } } = await worker.recognize(file);
+                    await worker.terminate();
+                    
+                    document.getElementById('ocr-text').value = text;
+                    showToast('文字识别完成', 'success');
+                } catch (error) {
+                    console.error('OCR识别失败:', error);
+                    showToast('OCR识别失败，请重试', 'error');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearOcrImage() {
+            const preview = document.getElementById('ocr-image-preview');
+            const uploadArea = document.querySelector('#ocr-image-preview').previousElementSibling;
+            
+            preview.classList.add('hidden');
+            uploadArea.classList.remove('hidden');
+            document.getElementById('ocr-file-input').value = '';
+        }
+
+        async function translateOcrText() {
+            const text = document.getElementById('ocr-text').value.trim();
+            const sourceLang = document.getElementById('ocr-source-lang').value;
+            const targetLang = document.getElementById('ocr-target-lang').value;
+            const btn = document.getElementById('ocr-translate-btn');
+
+            if (!text) {
+                showToast('请先上传图片或输入文字', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> 翻译中...`;
+
+            try {
+                let apiSourceLang = 'en';
+                if (sourceLang.includes('chi')) apiSourceLang = 'zh';
+                else if (sourceLang.includes('jpn')) apiSourceLang = 'ja';
+                else if (sourceLang.includes('kor')) apiSourceLang = 'ko';
+
+                const result = await translateWithPriority(text, apiSourceLang, targetLang);
+                document.getElementById('ocr-translation').value = result.translatedText;
+                showToast('翻译成功', 'success');
+            } catch (error) {
+                showToast(`翻译失败：${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa fa-language"></i> 翻译识别结果`;
+            }
+        }
+
+        function copyOcrResult() {
+            const text = document.getElementById('ocr-translation').value;
+            if (!text) {
+                showToast('没有可复制的内容', 'warning');
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('复制成功', 'success');
+            }).catch(() => {
+                showToast('复制失败', 'error');
+            });
+        }
+
+        function clearOcr() {
+            document.getElementById('ocr-text').value = '';
+            document.getElementById('ocr-translation').value = '';
+            clearOcrImage();
+            showToast('内容已清空', 'info');
+        }
+
+        function triggerPptUpload() {
+            document.getElementById('ppt-file-input').click();
+        }
+
+        async function handlePptFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showToast('正在解析PPT文件...', 'info');
+
+            try {
+                const zip = new JSZip();
+                const content = await zip.loadAsync(file);
+                
+                const texts = [];
+                let slideCount = 0;
+
+                for (const filename in content.files) {
+                    if (filename.startsWith('ppt/slides/slide') && filename.endsWith('.xml')) {
+                        slideCount++;
+                        const xmlContent = await content.files[filename].async('string');
+                        const text = extractTextFromXml(xmlContent);
+                        if (text.trim()) {
+                            texts.push(text);
+                        }
+                    }
+                }
+
+                document.getElementById('ppt-source-text').value = texts.join('\n\n---\n\n');
+                document.getElementById('ppt-slide-count').textContent = `幻灯片数量: ${slideCount}`;
+                document.getElementById('ppt-text-count').textContent = `文本段落: ${texts.length}`;
+                document.getElementById('ppt-info').classList.remove('hidden');
+                
+                showToast(`成功提取 ${texts.length} 段文本`, 'success');
+            } catch (error) {
+                console.error('PPT解析失败:', error);
+                showToast('PPT解析失败，请确保文件格式正确', 'error');
+            }
+        }
+
+        function extractTextFromXml(xml) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xml, 'text/xml');
+            const textElements = doc.getElementsByTagName('a:t');
+            const texts = [];
+            
+            for (let i = 0; i < textElements.length; i++) {
+                const text = textElements[i].textContent;
+                if (text && text.trim()) {
+                    texts.push(text.trim());
+                }
+            }
+            
+            return texts.join('\n');
+        }
+
+        async function translatePptTexts() {
+            const text = document.getElementById('ppt-source-text').value.trim();
+            const sourceLang = document.getElementById('ppt-source-lang').value;
+            const targetLang = document.getElementById('ppt-target-lang').value;
+            const btn = document.getElementById('ppt-translate-btn');
+
+            if (!text) {
+                showToast('请先上传PPT文件或输入文字', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> 翻译中...`;
+
+            try {
+                const result = await translateWithPriority(text, sourceLang, targetLang);
+                document.getElementById('ppt-target-text').value = result.translatedText;
+                showToast('翻译成功', 'success');
+            } catch (error) {
+                showToast(`翻译失败：${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa fa-language"></i> 批量翻译全部`;
+            }
+        }
+
+        function exportPptTranslations() {
+            const text = document.getElementById('ppt-target-text').value;
+            if (!text) {
+                showToast('没有可导出的内容', 'warning');
+                return;
+            }
+
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            downloadFile(text, `linguaflow-ppt-translation-${timestamp}.txt`, 'text/plain');
+            showToast('翻译结果导出成功', 'success');
+        }
+
+        function clearPpt() {
+            document.getElementById('ppt-source-text').value = '';
+            document.getElementById('ppt-target-text').value = '';
+            document.getElementById('ppt-info').classList.add('hidden');
+            document.getElementById('ppt-file-input').value = '';
+            showToast('内容已清空', 'info');
+        }
+
+        function renderApiPage() {
+            const container = document.getElementById('page-content');
+            const config = storage.getApiConfig();
+            
+            container.innerHTML = `
+                <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-soft p-6 card-hover">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                                <span class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                                    <i class="fa fa-cog text-white"></i>
+                                </span>
+                                API配置
+                            </h2>
+                            <p class="text-gray-500 mt-1">配置翻译API接口，支持多种翻译服务</p>
+                        </div>
+                        <button onclick="testApi()" class="px-4 py-2.5 bg-white text-success border border-success/20 rounded-xl hover:bg-success/5 hover:border-success/40 transition-all-300 flex items-center gap-2 shadow-sm">
+                            <i class="fa fa-check-circle"></i>
+                            测试连接
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="space-y-6">
+                            <div class="bg-gradient-to-r from-indigo-50/60 to-sky-50/60 rounded-xl p-5 border border-indigo-100/50">
+                                <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                    <span class="w-6 h-6 bg-primary/10 rounded-lg flex items-center justify-center">
+                                        <i class="fa fa-exchange text-primary text-xs"></i>
+                                    </span>
+                                    翻译服务选择
+                                </h3>
+                                <select id="api-type" onchange="toggleApiFields()" class="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                                    <option value="auto" ${config.apiType === 'auto' ? 'selected' : ''}>Auto (默认MyMemory)</option>
+                                    <option value="baidu" ${config.apiType === 'baidu' ? 'selected' : ''}>百度翻译</option>
+                                    <option value="openai" ${config.apiType === 'openai' ? 'selected' : ''}>OpenAI</option>
+                                    <option value="deepseek" ${config.apiType === 'deepseek' ? 'selected' : ''}>DeepSeek</option>
+                                    <option value="doubao" ${config.apiType === 'doubao' ? 'selected' : ''}>豆包 (Doubao)</option>
+                                </select>
+                            </div>
+
+                            <div id="api-fields" class="space-y-4">
+                                <div id="baidu-fields" class="${config.apiType === 'baidu' ? '' : 'hidden'}">
+                                    <h3 class="text-sm font-semibold text-gray-700 mb-3">百度翻译API配置</h3>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-600 mb-1.5">APP ID</label>
+                                            <input type="text" id="api-appid" value="${escapeHtml(config.appId || '')}" placeholder="请输入百度翻译APP ID" class="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-600 mb-1.5">密钥 (Key)</label>
+                                            <input type="password" id="api-key" value="${escapeHtml(config.key || '')}" placeholder="请输入百度翻译密钥" class="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                                            <button onclick="toggleApiKey()" class="mt-2 text-xs text-primary hover:text-primaryDark transition-all-300">显示/隐藏密钥</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="ai-fields" class="${['openai', 'deepseek', 'doubao'].includes(config.apiType) ? '' : 'hidden'}">
+                                    <h3 class="text-sm font-semibold text-gray-700 mb-3">API Key 配置</h3>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-600 mb-1.5">API Key</label>
+                                            <input type="password" id="api-key" value="${escapeHtml(config.key || '')}" placeholder="请输入API Key" class="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                                            <button onclick="toggleApiKey()" class="mt-2 text-xs text-primary hover:text-primaryDark transition-all-300">显示/隐藏密钥</button>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-600 mb-1.5">CORS代理地址 (可选)</label>
+                                            <input type="text" id="api-proxy" value="${escapeHtml(config.proxyUrl || '')}" placeholder="如: https://api.allorigins.win/get?url=" class="w-full px-4 py-3 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all-300 bg-white/80">
+                                            <p class="text-xs text-gray-500 mt-2">由于浏览器跨域限制，OpenAI/DeepSeek/豆包API需要配置CORS代理。推荐使用: https://api.allorigins.win/raw?url= 或自行部署代理服务。</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="auto-fields" class="${config.apiType === 'auto' ? '' : 'hidden'}">
+                                    <div class="bg-gradient-to-r from-success/5 to-green-50/50 rounded-xl p-4 border border-success/10">
+                                        <p class="text-sm text-gray-700 flex items-center gap-2">
+                                            <span class="w-5 h-5 bg-success/10 rounded-full flex items-center justify-center">
+                                                <i class="fa fa-check text-success text-xs"></i>
+                                            </span>
+                                            使用默认的MyMemory翻译服务，无需配置API Key，直接可用。
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onclick="saveApiConfig()" class="w-full px-6 py-3 btn-gradient text-white rounded-xl font-medium hover:shadow-lg hover:shadow-primary/20 transition-all-300 flex items-center justify-center gap-2">
+                                <i class="fa fa-save"></i>
+                                保存配置
+                            </button>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="bg-gradient-to-r from-indigo-50/60 to-sky-50/60 rounded-xl p-5 border border-indigo-100/50">
+                                <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                    <span class="w-6 h-6 bg-primary/10 rounded-lg flex items-center justify-center">
+                                        <i class="fa fa-key text-primary text-xs"></i>
+                                    </span>
+                                    获取API密钥
+                                </h3>
+                                <div class="space-y-3">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa fa-baidu text-blue-600"></i>
+                                        <a href="https://fanyi-api.baidu.com/" target="_blank" class="text-sm text-primary hover:underline">百度翻译开放平台</a>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa fa-openid text-blue-500"></i>
+                                        <a href="https://platform.openai.com/" target="_blank" class="text-sm text-primary hover:underline">OpenAI Platform</a>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa fa-code-fork text-green-600"></i>
+                                        <a href="https://platform.deepseek.com/" target="_blank" class="text-sm text-primary hover:underline">DeepSeek Platform</a>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa fa-qq text-blue-500"></i>
+                                        <a href="https://ai.baidu.com/doubao" target="_blank" class="text-sm text-primary hover:underline">百度豆包开放平台</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-amber-50/60 to-orange-50/60 rounded-xl p-5 border border-amber-100/50">
+                                <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                    <span class="w-6 h-6 bg-warning/10 rounded-lg flex items-center justify-center">
+                                        <i class="fa fa-info-circle text-warning text-xs"></i>
+                                    </span>
+                                    API调用说明
+                                </h3>
+                                <ul class="text-sm text-gray-600 space-y-1">
+                                    <li>• 免费版用户每天有一定的调用限额</li>
+                                    <li>• 超出限额后需要购买付费套餐</li>
+                                    <li>• 建议妥善保管您的API密钥</li>
+                                    <li>• 密钥会保存在本地浏览器中</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-gray-50/60 to-slate-50/60 rounded-xl p-5 border border-gray-100/50">
+                                <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                    <span class="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <i class="fa fa-shield text-gray-500 text-xs"></i>
+                                    </span>
+                                    CORS代理说明
+                                </h3>
+                                <p class="text-sm text-gray-600">
+                                    OpenAI、DeepSeek和豆包API不支持浏览器直接调用（CORS限制），需要配置CORS代理。推荐使用公开代理服务或自行部署。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-gradient-to-r from-red-50/60 to-pink-50/60 rounded-xl p-5 border border-red-100/50">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-danger/10 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-exclamation-triangle text-danger text-xs"></i>
+                            </span>
+                            错误提示说明
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                            <div><span class="text-danger font-semibold">52003</span>: 未授权用户，请检查APP ID和密钥</div>
+                            <div><span class="text-danger font-semibold">54001</span>: 签名错误，请检查密钥</div>
+                            <div><span class="text-danger font-semibold">54003</span>: 访问频率受限，请稍后再试</div>
+                            <div><span class="text-danger font-semibold">54004</span>: 账户余额不足，请充值</div>
+                            <div><span class="text-danger font-semibold">58000</span>: 客户端IP非法</div>
+                            <div><span class="text-danger font-semibold">58001</span>: 译文语言方向不支持</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleApiKey() {
+            const input = document.getElementById('api-key');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function toggleApiFields() {
+            const apiType = document.getElementById('api-type').value;
+            
+            document.getElementById('baidu-fields').classList.add('hidden');
+            document.getElementById('ai-fields').classList.add('hidden');
+            document.getElementById('auto-fields').classList.add('hidden');
+            
+            if (apiType === 'baidu') {
+                document.getElementById('baidu-fields').classList.remove('hidden');
+            } else if (['openai', 'deepseek', 'doubao'].includes(apiType)) {
+                document.getElementById('ai-fields').classList.remove('hidden');
+            } else if (apiType === 'auto') {
+                document.getElementById('auto-fields').classList.remove('hidden');
+            }
+        }
+
+        function saveApiConfig() {
+            const apiType = document.getElementById('api-type').value;
+            const appId = document.getElementById('api-appid')?.value.trim() || '';
+            const key = document.getElementById('api-key')?.value.trim() || '';
+            const proxyUrl = document.getElementById('api-proxy')?.value.trim() || '';
+
+            if (apiType === 'baidu' && (!appId || !key)) {
+                showToast('请填写完整的APP ID和密钥', 'warning');
+                return;
+            }
+
+            if (['openai', 'deepseek', 'doubao'].includes(apiType) && !key) {
+                showToast('请填写API Key', 'warning');
+                return;
+            }
+
+            storage.setApiConfig({
+                appId,
+                key,
+                apiType,
+                proxyUrl
+            });
+            
+            api.updateConfig();
+            showToast('API配置保存成功', 'success');
+        }
+
+        async function testApi() {
+            const apiType = document.getElementById('api-type').value;
+            
+            if (apiType === 'auto') {
+                showToast('Auto模式使用MyMemory API，无需测试', 'info');
+                return;
+            }
+
+            const key = document.getElementById('api-key')?.value.trim();
+            
+            if (['openai', 'deepseek', 'doubao'].includes(apiType) && !key) {
+                showToast('请先填写API Key', 'warning');
+                return;
+            }
+
+            if (apiType === 'baidu') {
+                const appId = document.getElementById('api-appid')?.value.trim();
+                if (!appId || !key) {
+                    showToast('请先填写APP ID和密钥', 'warning');
+                    return;
+                }
+            }
+
+            showToast('正在测试连接...', 'info');
+
+            try {
+                const result = await api.translate('Hello', 'en', 'zh');
+                if (result.translatedText) {
+                    showToast(`测试成功！"Hello" 翻译为 "${result.translatedText}"`, 'success');
+                }
+            } catch (error) {
+                showToast(`测试失败：${error.message}`, 'error');
+            }
+        }
+
+        function navigateTo(page) {
+            currentPage = page;
+            
+            document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(btn => {
+                btn.classList.remove('btn-gradient', 'text-white', 'shadow-lg', 'shadow-primary/20', 'bg-indigo-50', 'text-primary');
+                btn.classList.add('text-gray-600', 'hover:bg-indigo-50', 'hover:text-primary');
+            });
+            
+            const activeBtn = document.getElementById(`nav-${page}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-gray-600', 'hover:bg-indigo-50', 'hover:text-primary');
+                activeBtn.classList.add('btn-gradient', 'text-white', 'shadow-lg', 'shadow-primary/20');
+            }
+    
+            const mobileActiveBtn = document.getElementById(`mobile-nav-${page}`);
+            if (mobileActiveBtn) {
+                mobileActiveBtn.classList.remove('text-gray-600', 'hover:bg-gray-100');
+                mobileActiveBtn.classList.add('bg-indigo-50', 'text-primary');
+            }
+    
+            renderPage(page);
+            
+            window.history.pushState({ page }, '', `#${page}`);
+        }
+        
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+        
+        function renderPage(page) {
+            const container = document.getElementById('page-content');
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(10px)';
+
+            setTimeout(() => {
+                switch (page) {
+                    case 'translate':
+                        renderTranslatePage();
+                        break;
+                    case 'memory':
+                        renderMemoryPage();
+                        break;
+                    case 'corpus':
+                        renderCorpusPage();
+                        break;
+                    case 'subtitle':
+                        renderSubtitlePage();
+                        break;
+                    case 'ocr':
+                        renderOcrPage();
+                        break;
+                    case 'ppt':
+                        renderPptPage();
+                        break;
+                    case 'api':
+                        renderApiPage();
+                        break;
+                    default:
+                        renderTranslatePage();
+                }
+
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }, 150);
+        }
+
+        window.addEventListener('load', () => {
+            const hash = window.location.hash.slice(1) || 'translate';
+            navigateTo(hash);
+        });
+
+        window.addEventListener('popstate', (event) => {
+            if (event.state && event.state.page) {
+                navigateTo(event.state.page);
+            }
+        });
+    </script>
 </body>
 </html>

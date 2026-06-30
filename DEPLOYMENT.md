@@ -1,4 +1,4 @@
-# VibeCoding 智能翻译系统 - 部署说明
+# LinguaFlow 智能翻译系统 - 部署说明
 
 ## 📋 项目概述
 
@@ -111,6 +111,97 @@ php -S localhost:8080
    - 部署完成后，Vercel 会生成一个公网链接
    - 格式：`https://vibecoding-translation.vercel.app`
    - 可以直接访问使用
+
+---
+
+## 🚀 Render.com 部署
+
+### 步骤：
+
+1. **访问 Render**
+   - 打开 https://render.com
+   - 注册或登录账号
+
+2. **创建静态网站**
+   - 点击 "New" → "Static Site"
+   - 连接 GitHub 仓库或手动上传文件
+
+3. **配置项目**
+   - Build Command：留空
+   - Publish Directory：留空（使用根目录）
+
+4. **部署**
+   - 点击 "Create Static Site"
+   - 等待部署完成
+
+5. **访问链接**
+   - 格式：`https://vibecoding-translation.onrender.com`
+
+---
+
+## 📦 GitHub Pages 部署
+
+### 步骤：
+
+1. **创建 GitHub 仓库**
+   - 在 GitHub 创建仓库（名称：`your-username.github.io`）
+
+2. **上传文件**
+   - 将项目文件上传到仓库
+
+3. **配置 Pages**
+   - 进入仓库设置 → "Pages"
+   - 选择分支：`main`
+   - 选择目录：`/`（根目录）
+   - 点击 "Save"
+
+4. **访问链接**
+   - 格式：`https://your-username.github.io`
+
+---
+
+## 📁 单文件部署（最简单）
+
+### 步骤：
+
+1. **复制文件**
+   - 只需复制 `index.html` 文件到任何静态服务器
+
+2. **上传到服务器**
+   - 使用 FTP、SFTP 或控制面板上传
+
+3. **直接访问**
+   - 访问 `https://your-domain.com/index.html`
+
+**优点：**
+- 无需配置任何构建工具
+- 单个文件即可运行所有功能
+- 零服务器配置成本
+
+---
+
+## 🐳 Netlify 部署
+
+### 步骤：
+
+1. **访问 Netlify**
+   - 打开 https://www.netlify.com
+   - 使用 GitHub 账号登录
+
+2. **导入项目**
+   - 点击 "Add new site" → "Import an existing project"
+   - 连接 GitHub 仓库
+
+3. **配置项目**
+   - Build command：留空
+   - Publish directory：留空
+
+4. **部署**
+   - 点击 "Deploy site"
+   - 等待部署完成
+
+5. **访问链接**
+   - 格式：`https://vibecoding-translation.netlify.app`
 
 ---
 
