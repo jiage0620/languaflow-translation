@@ -14,11 +14,46 @@ class TranslationAPI {
             return { translatedText: text, from: 'same-lang' };
         }
 
-        if (this.config.apiType === 'baidu' && this.config.appId && this.config.key) {
-            return await this.translateWithBaidu(text, sourceLang, targetLang);
+        const apiType = this.config.apiType || 'auto';
+        
+        switch (apiType) {
+            case 'openai':
+                if (this.config.key) {
+                    if (!this.config.proxyUrl) {
+                        throw new Error('使用OpenAI翻译需要配置CORS代理地址，请在API配置中填写代理地址');
+                    }
+                    return await this.translateWithOpenAI(text, sourceLang, targetLang);
+                }
+                return await this.translateWithMyMemory(text, sourceLang, targetLang);
+            
+            case 'deepseek':
+                if (this.config.key) {
+                    if (!this.config.proxyUrl) {
+                        throw new Error('使用DeepSeek翻译需要配置CORS代理地址，请在API配置中填写代理地址');
+                    }
+                    return await this.translateWithDeepSeek(text, sourceLang, targetLang);
+                }
+                return await this.translateWithMyMemory(text, sourceLang, targetLang);
+            
+            case 'doubao':
+                if (this.config.key) {
+                    if (!this.config.proxyUrl) {
+                        throw new Error('使用豆包翻译需要配置CORS代理地址，请在API配置中填写代理地址');
+                    }
+                    return await this.translateWithDoubao(text, sourceLang, targetLang);
+                }
+                return await this.translateWithMyMemory(text, sourceLang, targetLang);
+            
+            case 'baidu':
+                if (this.config.appId && this.config.key) {
+                    return await this.translateWithBaidu(text, sourceLang, targetLang);
+                }
+                return await this.translateWithMyMemory(text, sourceLang, targetLang);
+            
+            case 'auto':
+            default:
+                return await this.translateWithMyMemory(text, sourceLang, targetLang);
         }
-
-        return await this.translateWithMyMemory(text, sourceLang, targetLang);
     }
 
     async translateWithMyMemory(text, sourceLang, targetLang) {
@@ -31,7 +66,7 @@ class TranslationAPI {
             if (data.responseData && data.responseData.translatedText) {
                 return {
                     translatedText: data.responseData.translatedText,
-                    from: 'api',
+                    from: 'mymemory',
                     confidence: data.responseData.match || 0.8
                 };
             } else {
@@ -48,6 +83,7 @@ class TranslationAPI {
         const baiduTarget = this.getBaiduLangCode(targetLang);
 
         const salt = Date.now().toString();
+        const encodedText = encodeURIComponent(text);
         const sign = this.generateSign(text, salt);
 
         const url = `https://fanyi-api.baidu.com/api/trans/vip/translate`;
@@ -64,23 +100,14 @@ class TranslationAPI {
                     const errorMsg = this.getErrorMessage(response.error_code);
                     reject(new Error(errorMsg));
                 } else if (response.trans_result && response.trans_result.length > 0) {
-                    const result = response.trans_result[0].dst;
-                    resolve({ translatedText: result, from: 'api' });
-                } else {
+                        const result = response.trans_result[0].dst;
+                        resolve({ translatedText: result, from: 'baidu' });
+                    } else {
                     reject(new Error('翻译失败，返回数据异常'));
                 }
             };
 
-            const params = new URLSearchParams({
-                q: text,
-                from: baiduSource,
-                to: baiduTarget,
-                appid: this.config.appId,
-                salt: salt,
-                sign: sign
-            });
-
-            script.src = `${url}?${params.toString()}&callback=${callbackName}`;
+            script.src = `${url}?q=${encodedText}&from=${baiduSource}&to=${baiduTarget}&appid=${this.config.appId}&salt=${salt}&sign=${sign}&callback=${callbackName}`;
             script.onerror = () => {
                 document.body.removeChild(script);
                 delete window[callbackName];
@@ -142,6 +169,43 @@ class TranslationAPI {
             6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21
         ];
 
+        const bytes = [];
+        for (let i = 0; i < string.length; i++) {
+            const charCode = string.charCodeAt(i);
+            if (charCode < 0x80) {
+                bytes.push(charCode);
+            } else if (charCode < 0x800) {
+                bytes.push(0xC0 | (charCode >> 6));
+                bytes.push(0x80 | (charCode & 0x3F));
+            } else {
+                bytes.push(0xE0 | (charCode >> 12));
+                bytes.push(0x80 | ((charCode >> 6) & 0x3F));
+                bytes.push(0x80 | (charCode & 0x3F));
+            }
+        }
+
+        const n = bytes.length;
+        const bitLen = n * 8;
+
+        bytes.push(0x80);
+        while (bytes.length % 64 !== 56) {
+            bytes.push(0x00);
+        }
+
+        bytes.push((bitLen) & 0xFF);
+        bytes.push((bitLen >> 8) & 0xFF);
+        bytes.push((bitLen >> 16) & 0xFF);
+        bytes.push((bitLen >> 24) & 0xFF);
+        bytes.push(0x00);
+        bytes.push(0x00);
+        bytes.push(0x00);
+        bytes.push(0x00);
+
+        let a = 0x67452301;
+        let b = 0xEFCDAB89;
+        let c = 0x98BADCFE;
+        let d = 0x10325476;
+
         const add = (x, y) => {
             const lsw = (x & 0xFFFF) + (y & 0xFFFF);
             const msw = (x >> 16) + (y >> 16) + (lsw >> 16);
@@ -160,16 +224,93 @@ class TranslationAPI {
         const HH = (a, b, c, d, x, s, ac) => add(rotateLeft(add(add(a, H(b, c, d)), add(x, ac)), s), b);
         const II = (a, b, c, d, x, s, ac) => add(rotateLeft(add(add(a, I(b, c, d)), add(x, ac)), s), b);
 
-        const toWordArray = (str) => {
-            const words = [];
-            let i = 0;
-            for (; i < str.length * 8; i += 8) {
-                words[i >> 5] |= (str.charCodeAt(i / 8) & 0xFF) << (i % 32);
+        for (let i = 0; i < bytes.length; i += 64) {
+            const x = [];
+            for (let j = 0; j < 16; j++) {
+                x[j] = bytes[i + j * 4] |
+                       (bytes[i + j * 4 + 1] << 8) |
+                       (bytes[i + j * 4 + 2] << 16) |
+                       (bytes[i + j * 4 + 3] << 24);
             }
-            words[i >> 5] |= 0x80 << (i % 32);
-            words[(((i + 64) >>> 9) << 4) + 14] = str.length * 8;
-            return words;
-        };
+
+            const aa = a;
+            const bb = b;
+            const cc = c;
+            const dd = d;
+
+            a = FF(a, b, c, d, x[0], s[0], table[0]);
+            d = FF(d, a, b, c, x[1], s[1], table[1]);
+            c = FF(c, d, a, b, x[2], s[2], table[2]);
+            b = FF(b, c, d, a, x[3], s[3], table[3]);
+            a = FF(a, b, c, d, x[4], s[4], table[4]);
+            d = FF(d, a, b, c, x[5], s[5], table[5]);
+            c = FF(c, d, a, b, x[6], s[6], table[6]);
+            b = FF(b, c, d, a, x[7], s[7], table[7]);
+            a = FF(a, b, c, d, x[8], s[8], table[8]);
+            d = FF(d, a, b, c, x[9], s[9], table[9]);
+            c = FF(c, d, a, b, x[10], s[10], table[10]);
+            b = FF(b, c, d, a, x[11], s[11], table[11]);
+            a = FF(a, b, c, d, x[12], s[12], table[12]);
+            d = FF(d, a, b, c, x[13], s[13], table[13]);
+            c = FF(c, d, a, b, x[14], s[14], table[14]);
+            b = FF(b, c, d, a, x[15], s[15], table[15]);
+
+            a = GG(a, b, c, d, x[1], s[16], table[16]);
+            d = GG(d, a, b, c, x[6], s[17], table[17]);
+            c = GG(c, d, a, b, x[11], s[18], table[18]);
+            b = GG(b, c, d, a, x[0], s[19], table[19]);
+            a = GG(a, b, c, d, x[5], s[20], table[20]);
+            d = GG(d, a, b, c, x[10], s[21], table[21]);
+            c = GG(c, d, a, b, x[15], s[22], table[22]);
+            b = GG(b, c, d, a, x[4], s[23], table[23]);
+            a = GG(a, b, c, d, x[9], s[24], table[24]);
+            d = GG(d, a, b, c, x[14], s[25], table[25]);
+            c = GG(c, d, a, b, x[3], s[26], table[26]);
+            b = GG(b, c, d, a, x[8], s[27], table[27]);
+            a = GG(a, b, c, d, x[13], s[28], table[28]);
+            d = GG(d, a, b, c, x[2], s[29], table[29]);
+            c = GG(c, d, a, b, x[7], s[30], table[30]);
+            b = GG(b, c, d, a, x[12], s[31], table[31]);
+
+            a = HH(a, b, c, d, x[5], s[32], table[32]);
+            d = HH(d, a, b, c, x[8], s[33], table[33]);
+            c = HH(c, d, a, b, x[11], s[34], table[34]);
+            b = HH(b, c, d, a, x[14], s[35], table[35]);
+            a = HH(a, b, c, d, x[1], s[36], table[36]);
+            d = HH(d, a, b, c, x[4], s[37], table[37]);
+            c = HH(c, d, a, b, x[7], s[38], table[38]);
+            b = HH(b, c, d, a, x[10], s[39], table[39]);
+            a = HH(a, b, c, d, x[13], s[40], table[40]);
+            d = HH(d, a, b, c, x[0], s[41], table[41]);
+            c = HH(c, d, a, b, x[3], s[42], table[42]);
+            b = HH(b, c, d, a, x[6], s[43], table[43]);
+            a = HH(a, b, c, d, x[9], s[44], table[44]);
+            d = HH(d, a, b, c, x[12], s[45], table[45]);
+            c = HH(c, d, a, b, x[15], s[46], table[46]);
+            b = HH(b, c, d, a, x[2], s[47], table[47]);
+
+            a = II(a, b, c, d, x[0], s[48], table[48]);
+            d = II(d, a, b, c, x[7], s[49], table[49]);
+            c = II(c, d, a, b, x[14], s[50], table[50]);
+            b = II(b, c, d, a, x[5], s[51], table[51]);
+            a = II(a, b, c, d, x[12], s[52], table[52]);
+            d = II(d, a, b, c, x[3], s[53], table[53]);
+            c = II(c, d, a, b, x[10], s[54], table[54]);
+            b = II(b, c, d, a, x[1], s[55], table[55]);
+            a = II(a, b, c, d, x[8], s[56], table[56]);
+            d = II(d, a, b, c, x[15], s[57], table[57]);
+            c = II(c, d, a, b, x[6], s[58], table[58]);
+            b = II(b, c, d, a, x[13], s[59], table[59]);
+            a = II(a, b, c, d, x[4], s[60], table[60]);
+            d = II(d, a, b, c, x[11], s[61], table[61]);
+            c = II(c, d, a, b, x[2], s[62], table[62]);
+            b = II(b, c, d, a, x[9], s[63], table[63]);
+
+            a = add(a, aa);
+            b = add(b, bb);
+            c = add(c, cc);
+            d = add(d, dd);
+        }
 
         const wordToHex = (lValue) => {
             let wordToHexValue = '';
@@ -180,93 +321,6 @@ class TranslationAPI {
             }
             return wordToHexValue;
         };
-
-        let a = 0x67452301;
-        let b = 0xEFCDAB89;
-        let c = 0x98BADCFE;
-        let d = 0x10325476;
-
-        const x = toWordArray(string);
-
-        for (let i = 0; i < x.length; i += 16) {
-            const aa = a;
-            const bb = b;
-            const cc = c;
-            const dd = d;
-
-            a = FF(a, b, c, d, x[i], s[0], table[0]);
-            d = FF(d, a, b, c, x[i + 1], s[1], table[1]);
-            c = FF(c, d, a, b, x[i + 2], s[2], table[2]);
-            b = FF(b, c, d, a, x[i + 3], s[3], table[3]);
-            a = FF(a, b, c, d, x[i + 4], s[4], table[4]);
-            d = FF(d, a, b, c, x[i + 5], s[5], table[5]);
-            c = FF(c, d, a, b, x[i + 6], s[6], table[6]);
-            b = FF(b, c, d, a, x[i + 7], s[7], table[7]);
-            a = FF(a, b, c, d, x[i + 8], s[8], table[8]);
-            d = FF(d, a, b, c, x[i + 9], s[9], table[9]);
-            c = FF(c, d, a, b, x[i + 10], s[10], table[10]);
-            b = FF(b, c, d, a, x[i + 11], s[11], table[11]);
-            a = FF(a, b, c, d, x[i + 12], s[12], table[12]);
-            d = FF(d, a, b, c, x[i + 13], s[13], table[13]);
-            c = FF(c, d, a, b, x[i + 14], s[14], table[14]);
-            b = FF(b, c, d, a, x[i + 15], s[15], table[15]);
-
-            a = GG(a, b, c, d, x[i + 1], s[16], table[16]);
-            d = GG(d, a, b, c, x[i + 6], s[17], table[17]);
-            c = GG(c, d, a, b, x[i + 11], s[18], table[18]);
-            b = GG(b, c, d, a, x[i], s[19], table[19]);
-            a = GG(a, b, c, d, x[i + 5], s[20], table[20]);
-            d = GG(d, a, b, c, x[i + 10], s[21], table[21]);
-            c = GG(c, d, a, b, x[i + 15], s[22], table[22]);
-            b = GG(b, c, d, a, x[i + 4], s[23], table[23]);
-            a = GG(a, b, c, d, x[i + 9], s[24], table[24]);
-            d = GG(d, a, b, c, x[i + 14], s[25], table[25]);
-            c = GG(c, d, a, b, x[i + 3], s[26], table[26]);
-            b = GG(b, c, d, a, x[i + 8], s[27], table[27]);
-            a = GG(a, b, c, d, x[i + 13], s[28], table[28]);
-            d = GG(d, a, b, c, x[i + 2], s[29], table[29]);
-            c = GG(c, d, a, b, x[i + 7], s[30], table[30]);
-            b = GG(b, c, d, a, x[i + 12], s[31], table[31]);
-
-            a = HH(a, b, c, d, x[i + 5], s[32], table[32]);
-            d = HH(d, a, b, c, x[i + 8], s[33], table[33]);
-            c = HH(c, d, a, b, x[i + 11], s[34], table[34]);
-            b = HH(b, c, d, a, x[i + 14], s[35], table[35]);
-            a = HH(a, b, c, d, x[i + 1], s[36], table[36]);
-            d = HH(d, a, b, c, x[i + 4], s[37], table[37]);
-            c = HH(c, d, a, b, x[i + 7], s[38], table[38]);
-            b = HH(b, c, d, a, x[i + 10], s[39], table[39]);
-            a = HH(a, b, c, d, x[i + 13], s[40], table[40]);
-            d = HH(d, a, b, c, x[i], s[41], table[41]);
-            c = HH(c, d, a, b, x[i + 3], s[42], table[42]);
-            b = HH(b, c, d, a, x[i + 6], s[43], table[43]);
-            a = HH(a, b, c, d, x[i + 9], s[44], table[44]);
-            d = HH(d, a, b, c, x[i + 12], s[45], table[45]);
-            c = HH(c, d, a, b, x[i + 15], s[46], table[46]);
-            b = HH(b, c, d, a, x[i + 2], s[47], table[47]);
-
-            a = II(a, b, c, d, x[i], s[48], table[48]);
-            d = II(d, a, b, c, x[i + 7], s[49], table[49]);
-            c = II(c, d, a, b, x[i + 14], s[50], table[50]);
-            b = II(b, c, d, a, x[i + 5], s[51], table[51]);
-            a = II(a, b, c, d, x[i + 12], s[52], table[52]);
-            d = II(d, a, b, c, x[i + 3], s[53], table[53]);
-            c = II(c, d, a, b, x[i + 10], s[54], table[54]);
-            b = II(b, c, d, a, x[i + 1], s[55], table[55]);
-            a = II(a, b, c, d, x[i + 8], s[56], table[56]);
-            d = II(d, a, b, c, x[i + 15], s[57], table[57]);
-            c = II(c, d, a, b, x[i + 6], s[58], table[58]);
-            b = II(b, c, d, a, x[i + 13], s[59], table[59]);
-            a = II(a, b, c, d, x[i + 4], s[60], table[60]);
-            d = II(d, a, b, c, x[i + 11], s[61], table[61]);
-            c = II(c, d, a, b, x[i + 2], s[62], table[62]);
-            b = II(b, c, d, a, x[i + 9], s[63], table[63]);
-
-            a = add(a, aa);
-            b = add(b, bb);
-            c = add(c, cc);
-            d = add(d, dd);
-        }
 
         return wordToHex(a) + wordToHex(b) + wordToHex(c) + wordToHex(d);
     }

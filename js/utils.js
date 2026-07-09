@@ -1,7 +1,7 @@
 const STORAGE_KEYS = {
-    MEMORY: 'vibecoding_translation_memory',
-    CORPUS: 'vibecoding_translation_corpus',
-    API_CONFIG: 'vibecoding_translation_api_config'
+    MEMORY: 'linguaflow_translation_memory',
+    CORPUS: 'linguaflow_translation_corpus',
+    API_CONFIG: 'linguaflow_translation_api_config'
 };
 
 const LANGUAGES = [

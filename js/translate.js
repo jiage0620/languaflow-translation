@@ -221,7 +221,11 @@ async function translateWithPriority(text, sourceLang, targetLang) {
 function getTranslationSourceLabel(source) {
     const labels = {
         'memory': '翻译记忆库',
-        'api': '百度翻译API',
+        'mymemory': 'MyMemory翻译API',
+        'baidu': '百度翻译API',
+        'openai': 'OpenAI翻译API',
+        'deepseek': 'DeepSeek翻译API',
+        'doubao': '豆包翻译API',
         'same-lang': '相同语言',
         'corpus': '专业语料库'
     };
